@@ -88,6 +88,39 @@ export default function SettingsPage() {
           </CardContent>
         </Card>
 
+        {/* Database Configuration */}
+        <Card className="border-slate-200 shadow-xs">
+          <CardHeader>
+            <div className="flex items-center gap-2">
+              <Database className="w-5 h-5 text-primary-800" />
+              <CardTitle className="text-base font-semibold">Neon Serverless PostgreSQL Database</CardTitle>
+            </div>
+            <CardDescription className="text-xs">
+              Cloud serverless database configuration for persistent document and clause storage.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4 text-xs">
+            <div className="p-3.5 rounded-lg border border-slate-200 bg-slate-50/70 flex items-center justify-between">
+              <div>
+                <span className="font-semibold text-slate-900 block">Database Provider: Neon PostgreSQL</span>
+                <span className="text-slate-600 text-[11px]">
+                  Supports autoscaling serverless Postgres with JSONB indexing for legal documents and Q&A history.
+                </span>
+              </div>
+              <span className="px-2.5 py-1 rounded-md text-[11px] font-semibold bg-emerald-50 text-emerald-800 border border-emerald-300">
+                NEON COMPATIBLE
+              </span>
+            </div>
+
+            <p className="text-slate-500 leading-relaxed">
+              To connect your live Neon database, add your connection string to <code className="bg-slate-100 px-1 py-0.5 rounded text-slate-800 font-mono">DATABASE_URL</code> in your <code className="bg-slate-100 px-1 py-0.5 rounded text-slate-800 font-mono">.env.local</code> file:
+            </p>
+            <div className="p-2.5 rounded-lg bg-slate-900 text-slate-200 font-mono text-[11px] overflow-x-auto">
+              DATABASE_URL="postgresql://user:password@ep-sample.us-east-2.aws.neon.tech/neondb?sslmode=require"
+            </div>
+          </CardContent>
+        </Card>
+
         {/* AI Provider Configuration */}
         <Card className="border-slate-200 shadow-xs">
           <CardHeader>

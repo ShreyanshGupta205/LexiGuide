@@ -4,6 +4,13 @@ import { SAMPLE_EMPLOYMENT_AGREEMENT_V1, SAMPLE_EMPLOYMENT_AGREEMENT_V2 } from "
 import { detectDocumentSections } from "@/lib/rag/section-detector";
 import { chunkDocumentSections } from "@/lib/rag/chunker";
 import { LocalAIProvider } from "@/lib/ai/local-provider";
+import {
+  isNeonConfigured,
+  neonSaveDocument,
+  neonGetDocument,
+  neonListDocuments,
+  neonDeleteDocument,
+} from "@/lib/db/neon";
 
 // Global cache to maintain store across Next.js API re-evaluations
 const globalForDocs = globalThis as unknown as {
@@ -71,6 +78,16 @@ export async function seedDemoDocuments(): Promise<void> {
 
   documentStore.set(doc1.id, doc1);
   documentStore.set(doc2.id, doc2);
+
+  // If Neon is configured, sync demo documents to PostgreSQL
+  if (isNeonConfigured()) {
+    try {
+      await neonSaveDocument(doc1);
+      await neonSaveDocument(doc2);
+    } catch {
+      // Non-blocking sync
+    }
+  }
 }
 
 /**
@@ -79,6 +96,18 @@ export async function seedDemoDocuments(): Promise<void> {
 export async function listDocuments(userId: string): Promise<LegalDocument[]> {
   await seedDemoDocuments();
 
+  // If Neon Postgres is configured, query database
+  if (isNeonConfigured()) {
+    try {
+      const dbDocs = await neonListDocuments(userId);
+      if (dbDocs.length > 0) {
+        return dbDocs;
+      }
+    } catch (e) {
+      console.warn("Neon query failed, using in-memory fallback:", e);
+    }
+  }
+
   const results: LegalDocument[] = [];
   Array.from(documentStore.values()).forEach((doc) => {
     if (doc.userId === userId || (doc.userId === DEMO_USER_ID && (userId === DEMO_USER_ID || userId.startsWith("demo-")))) {
@@ -86,7 +115,6 @@ export async function listDocuments(userId: string): Promise<LegalDocument[]> {
     }
   });
 
-  // Sort newest first
   return results.sort((a, b) => new Date(b.uploadDate).getTime() - new Date(a.uploadDate).getTime());
 }
 
@@ -95,6 +123,18 @@ export async function listDocuments(userId: string): Promise<LegalDocument[]> {
  */
 export async function getDocument(id: string, userId: string): Promise<LegalDocument | null> {
   await seedDemoDocuments();
+
+  // If Neon is configured, retrieve from Postgres
+  if (isNeonConfigured()) {
+    try {
+      const dbDoc = await neonGetDocument(id, userId);
+      if (dbDoc) {
+        return dbDoc;
+      }
+    } catch (e) {
+      console.warn("Neon document fetch error, falling back to cache:", e);
+    }
+  }
 
   const doc = documentStore.get(id);
   if (!doc) {
@@ -119,7 +159,17 @@ export async function getDocument(id: string, userId: string): Promise<LegalDocu
  * Saves or updates a document
  */
 export async function saveDocument(doc: LegalDocument): Promise<void> {
+  // Always update in-memory cache for fast local responses
   documentStore.set(doc.id, doc);
+
+  // If Neon is configured, persist in Postgres
+  if (isNeonConfigured()) {
+    try {
+      await neonSaveDocument(doc);
+    } catch (e) {
+      console.error("Failed to persist document to Neon:", e);
+    }
+  }
 }
 
 /**
@@ -128,9 +178,18 @@ export async function saveDocument(doc: LegalDocument): Promise<void> {
 export async function deleteDocument(id: string, userId: string): Promise<boolean> {
   await seedDemoDocuments();
 
+  let deletedFromNeon = false;
+  if (isNeonConfigured()) {
+    try {
+      deletedFromNeon = await neonDeleteDocument(id, userId);
+    } catch (e) {
+      console.warn("Neon delete failed:", e);
+    }
+  }
+
   const doc = documentStore.get(id);
   if (!doc) {
-    return false;
+    return deletedFromNeon;
   }
 
   const isOwner = verifyDocumentOwnership(doc.userId, {
