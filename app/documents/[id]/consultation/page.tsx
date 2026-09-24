@@ -1,0 +1,283 @@
+"use client";
+
+import * as React from "react";
+import Link from "next/link";
+import { useParams } from "next/navigation";
+import {
+  ArrowLeft,
+  Printer,
+  CheckSquare,
+  Square,
+  HelpCircle,
+  FileCheck,
+  ShieldCheck,
+  Briefcase,
+  Calendar,
+  AlertTriangle,
+} from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { AttentionBadge } from "@/components/shared/attention-badge";
+import { DisclaimerBanner } from "@/components/shared/disclaimer-banner";
+import { ConsultationBrief, ConsultationChecklistItem } from "@/lib/types";
+
+export default function DocumentConsultationPage() {
+  const params = useParams();
+  const docId = params.id as string;
+
+  const [brief, setBrief] = React.useState<ConsultationBrief | null>(null);
+  const [isLoading, setIsLoading] = React.useState(true);
+  const [docsChecklist, setDocsChecklist] = React.useState<ConsultationChecklistItem[]>([]);
+  const [infoChecklist, setInfoChecklist] = React.useState<ConsultationChecklistItem[]>([]);
+
+  React.useEffect(() => {
+    async function loadBrief() {
+      try {
+        setIsLoading(true);
+        const res = await fetch("/api/consultation", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ documentId: docId }),
+        });
+        const data = await res.json();
+        if (data.brief) {
+          setBrief(data.brief);
+          setDocsChecklist(data.brief.documentsToBring || []);
+          setInfoChecklist(data.brief.informationToPrepare || []);
+        }
+      } catch {
+        // Ignore
+      } finally {
+        setIsLoading(false);
+      }
+    }
+
+    if (docId) {
+      loadBrief();
+    }
+  }, [docId]);
+
+  const toggleDocItem = (id: string) => {
+    setDocsChecklist((prev) =>
+      prev.map((item) => (item.id === id ? { ...item, checked: !item.checked } : item))
+    );
+  };
+
+  const toggleInfoItem = (id: string) => {
+    setInfoChecklist((prev) =>
+      prev.map((item) => (item.id === id ? { ...item, checked: !item.checked } : item))
+    );
+  };
+
+  const handlePrint = () => {
+    window.print();
+  };
+
+  if (isLoading) {
+    return (
+      <div className="flex-1 flex items-center justify-center p-12">
+        <div className="flex flex-col items-center gap-3">
+          <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary-800 border-t-transparent" />
+          <p className="text-sm font-medium text-slate-600">Generating consultation brief...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!brief) {
+    return (
+      <div className="flex-1 flex items-center justify-center p-12">
+        <div className="text-center space-y-3">
+          <p className="text-sm text-slate-600">Could not generate brief for this document.</p>
+          <Link href="/documents">
+            <Button size="sm" variant="primary">Return to Documents</Button>
+          </Link>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="flex-1 bg-slate-50/50 py-8 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-4xl mx-auto space-y-8">
+        {/* Navigation & Print Actions */}
+        <div className="flex items-center justify-between gap-4 print:hidden">
+          <Link href={`/documents/${docId}`}>
+            <Button size="sm" variant="ghost" className="gap-1 text-slate-600">
+              <ArrowLeft className="w-4 h-4" />
+              <span>Back to Document Viewer</span>
+            </Button>
+          </Link>
+
+          <Button size="sm" variant="outline" onClick={handlePrint} className="gap-1.5 shadow-xs">
+            <Printer className="w-4 h-4" />
+            <span>Print / Save as PDF</span>
+          </Button>
+        </div>
+
+        {/* Printable Brief Header */}
+        <div className="bg-white rounded-2xl border border-slate-200 p-6 sm:p-8 shadow-xs space-y-6">
+          <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between pb-6 border-b border-slate-200 gap-4">
+            <div>
+              <div className="flex items-center gap-2 mb-1">
+                <span className="text-[11px] font-bold uppercase tracking-wider text-primary-900 bg-primary-50 px-2.5 py-0.5 rounded border border-primary-100">
+                  Legal Consultation Brief
+                </span>
+                <span className="text-xs text-slate-400">·</span>
+                <span className="text-xs text-slate-500 font-medium">Generated {brief.generatedDate}</span>
+              </div>
+              <h1 className="text-2xl font-bold tracking-tight text-slate-900">
+                {brief.documentName}
+              </h1>
+            </div>
+
+            <div className="text-right text-xs text-slate-500 hidden sm:block">
+              <span className="font-semibold text-slate-800 block">LexiGuide Platform</span>
+              <span>Client Preparation Package</span>
+            </div>
+          </div>
+
+          {/* Section 1: Situation Summary */}
+          <div className="space-y-2">
+            <h2 className="text-xs font-bold uppercase tracking-wider text-slate-500">
+              1. Situation Summary
+            </h2>
+            <div className="p-4 rounded-xl bg-slate-50 border border-slate-200/80 text-xs text-slate-800 leading-relaxed">
+              {brief.situationSummary}
+            </div>
+          </div>
+
+          {/* Section 2: Important Provisions Warranting Discussion */}
+          <div className="space-y-3">
+            <h2 className="text-xs font-bold uppercase tracking-wider text-slate-500">
+              2. Important Provisions Warranting Professional Discussion
+            </h2>
+            <div className="space-y-2.5">
+              {brief.importantProvisions.map((prov, idx) => (
+                <div key={idx} className="p-3.5 rounded-xl border border-slate-200 bg-white space-y-1.5 text-xs">
+                  <div className="flex items-center justify-between gap-2">
+                    <h3 className="font-semibold text-slate-900">{prov.title}</h3>
+                    <AttentionBadge level={prov.attentionLevel} />
+                  </div>
+                  <p className="text-slate-600 leading-relaxed">{prov.summary}</p>
+                  <div className="text-[11px] text-slate-400 pt-1">
+                    Source: {prov.source.section} · Page {prov.source.page}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Section 3: Questions to Ask Counsel */}
+          <div className="space-y-3">
+            <h2 className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
+              <HelpCircle className="w-4 h-4 text-primary-800" />
+              3. Questions to Ask a Legal Professional
+            </h2>
+            <div className="rounded-xl border border-primary-100 bg-primary-50/30 p-4 space-y-2.5">
+              {brief.questionsToAsk.map((q, idx) => (
+                <div key={idx} className="flex items-start gap-2.5 text-xs text-slate-800">
+                  <span className="font-bold text-primary-900 shrink-0">{idx + 1}.</span>
+                  <span className="leading-relaxed font-medium">{q}</span>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Section 4: Documents to Bring Checklist */}
+          <div className="space-y-3">
+            <h2 className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
+              <FileCheck className="w-4 h-4 text-emerald-800" />
+              4. Documents to Bring (Preparation Checklist)
+            </h2>
+            <div className="space-y-2">
+              {docsChecklist.map((item) => (
+                <div
+                  key={item.id}
+                  onClick={() => toggleDocItem(item.id)}
+                  role="checkbox"
+                  aria-checked={item.checked}
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      toggleDocItem(item.id);
+                    }
+                  }}
+                  className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors text-xs ${
+                    item.checked
+                      ? "bg-emerald-50/60 border-emerald-300 text-slate-900"
+                      : "bg-white border-slate-200 text-slate-700 hover:bg-slate-50"
+                  }`}
+                >
+                  {item.checked ? (
+                    <CheckSquare className="w-4 h-4 text-emerald-700 shrink-0 mt-0.5" />
+                  ) : (
+                    <Square className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
+                  )}
+                  <div>
+                    <span className={`font-semibold block ${item.checked ? "line-through text-slate-500" : ""}`}>
+                      {item.text}
+                    </span>
+                    {item.description && (
+                      <span className="text-[11px] text-slate-500 mt-0.5 block">{item.description}</span>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Section 5: Information to Prepare Checklist */}
+          <div className="space-y-3">
+            <h2 className="text-xs font-bold uppercase tracking-wider text-slate-500 flex items-center gap-1.5">
+              <Calendar className="w-4 h-4 text-primary-800" />
+              5. Information & Key Facts to Prepare
+            </h2>
+            <div className="space-y-2">
+              {infoChecklist.map((item) => (
+                <div
+                  key={item.id}
+                  onClick={() => toggleInfoItem(item.id)}
+                  role="checkbox"
+                  aria-checked={item.checked}
+                  tabIndex={0}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" || e.key === " ") {
+                      e.preventDefault();
+                      toggleInfoItem(item.id);
+                    }
+                  }}
+                  className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors text-xs ${
+                    item.checked
+                      ? "bg-primary-50/60 border-primary-300 text-slate-900"
+                      : "bg-white border-slate-200 text-slate-700 hover:bg-slate-50"
+                  }`}
+                >
+                  {item.checked ? (
+                    <CheckSquare className="w-4 h-4 text-primary-700 shrink-0 mt-0.5" />
+                  ) : (
+                    <Square className="w-4 h-4 text-slate-400 shrink-0 mt-0.5" />
+                  )}
+                  <div>
+                    <span className={`font-semibold block ${item.checked ? "line-through text-slate-500" : ""}`}>
+                      {item.text}
+                    </span>
+                    {item.description && (
+                      <span className="text-[11px] text-slate-500 mt-0.5 block">{item.description}</span>
+                    )}
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Mandatory Disclaimer */}
+          <div className="pt-6 border-t border-slate-200">
+            <DisclaimerBanner />
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

@@ -1,0 +1,86 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --background: #f8fafc;
+  --foreground: #0f172a;
+  --card: #ffffff;
+  --card-foreground: #0f172a;
+  --muted: #f1f5f9;
+  --muted-foreground: #64748b;
+  --border: #e2e8f0;
+  --input: #e2e8f0;
+  --primary: #1e40af;
+  --primary-foreground: #ffffff;
+  --primary-subtle: #eff6ff;
+  --accent: #2563eb;
+  --accent-foreground: #ffffff;
+  
+  /* Attention System Tokens */
+  --badge-info-bg: #eff6ff;
+  --badge-info-text: #1e40af;
+  --badge-info-border: #bfdbfe;
+  
+  --badge-important-bg: #fffbeb;
+  --badge-important-text: #b45309;
+  --badge-important-border: #fde68a;
+  
+  --badge-attention-bg: #fef2f2;
+  --badge-attention-text: #b91c1c;
+  --badge-attention-border: #fecaca;
+}
+
+@layer base {
+  * {
+    @apply border-slate-200;
+  }
+  
+  body {
+    @apply bg-background text-foreground antialiased font-sans;
+    min-height: 100vh;
+  }
+
+  /* Accessible visible focus indicators */
+  :focus-visible {
+    @apply outline-none ring-2 ring-primary-600 ring-offset-2 ring-offset-background;
+  }
+}
+
+/* Custom smooth scroll and scrollbar */
+html {
+  scroll-behavior: smooth;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: #cbd5e1;
+  border-radius: 9999px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: #94a3b8;
+}
+
+/* Legal Document text typography */
+.legal-clause-highlight {
+  background-color: #fef3c7;
+  border-left: 4px solid #f59e0b;
+  padding: 0.5rem 0.75rem;
+  border-radius: 0 0.375rem 0.375rem 0;
+  transition: background-color 0.3s ease, border-color 0.3s ease;
+}
+
+.legal-clause-target {
+  background-color: #dbeafe !important;
+  border-left: 4px solid #2563eb !important;
+  box-shadow: 0 0 0 2px rgba(37, 99, 235, 0.2);
+}
