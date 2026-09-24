@@ -159,6 +159,45 @@ export interface ConsultationBrief {
   disclaimer: string;
 }
 
+export interface MissingProtection {
+  id: string;
+  category: string;
+  title: string;
+  description: string;
+  riskSeverity: "moderate" | "high";
+  recommendedRemedy: string;
+  sampleCounterLanguage?: string;
+}
+
+export interface SymmetryDimension {
+  name: string;
+  score: number; // 0 to 100
+  status: "balanced" | "favors_party_a" | "favors_party_b" | "unilateral";
+  note: string;
+}
+
+export interface ContractSymmetryScore {
+  overallScore: number; // 0 to 100
+  assessment: string;
+  dimensions: SymmetryDimension[];
+}
+
+export interface CounterProposal {
+  clauseId: string;
+  clauseTitle: string;
+  originalTextSummary: string;
+  negotiationObjective: string;
+  suggestedWording: string;
+  talkingPoints: string[];
+}
+
+export interface AdvancedIntelligenceReport {
+  documentId: string;
+  symmetry: ContractSymmetryScore;
+  missingProtections: MissingProtection[];
+  counterProposals: CounterProposal[];
+}
+
 export interface UserSession {
   userId: string;
   email: string;

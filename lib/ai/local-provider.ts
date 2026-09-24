@@ -9,6 +9,10 @@ import {
   ConsultationBrief,
   ComparisonCategoryRow,
   ComparisonDifference,
+  AdvancedIntelligenceReport,
+  ContractSymmetryScore,
+  MissingProtection,
+  CounterProposal,
 } from "@/lib/types";
 import { isRetrievalGrounded, retrieveRelevantChunks } from "@/lib/rag/retrieval";
 
@@ -592,6 +596,194 @@ export class LocalAIProvider {
       documentsToBring,
       informationToPrepare,
       disclaimer: "This consultation brief and checklist are for informational preparation purposes only and do not constitute legal advice. Please consult a qualified legal professional for counsel on your specific situation.",
+    };
+  }
+
+  /**
+   * Generates Advanced Contract Intelligence:
+   * 1. Contract Symmetry & Power Balance Score (0-100)
+   * 2. Negative Space Analysis (Missing Standard Protections)
+   * 3. Negotiation Counter-Proposal Suggestions
+   */
+  async generateAdvancedIntelligence(doc: LegalDocument): Promise<AdvancedIntelligenceReport> {
+    const textLower = doc.rawText.toLowerCase();
+
+    // 1. Calculate Symmetry Dimensions
+    // Dim A: Termination Notice Parity
+    const hasTermination = textLower.includes("termination") || textLower.includes("notice");
+    const hasImmediateForCause = textLower.includes("immediate") || textLower.includes("without notice");
+    const hasNegativeCure = textLower.includes("without cure") || textLower.includes("without any cure") || textLower.includes("no cure");
+    const hasCurePeriod = !hasNegativeCure && (textLower.includes("cure period") || textLower.includes("cure within") || textLower.includes("15-day cure") || textLower.includes("30-day cure") || textLower.includes("days to cure") || textLower.includes("opportunity to cure"));
+    const termScore = hasCurePeriod ? 90 : hasImmediateForCause ? 60 : 75;
+
+    // Dim B: IP Assignment Balance
+    const hasIP = textLower.includes("intellectual property") || textLower.includes("inventions");
+    const hasCarveout = textLower.includes("prior inventions") || textLower.includes("exhibit a") || textLower.includes("personal time");
+    const ipScore = hasCarveout ? 85 : hasIP ? 50 : 80;
+
+    // Dim C: Restrictive Covenants (Non-compete)
+    const hasNonCompete = textLower.includes("non-compete") || textLower.includes("competing business");
+    const isLongDuration = textLower.includes("12 months") || textLower.includes("24 months") || textLower.includes("two years");
+    const covenantScore = !hasNonCompete ? 95 : isLongDuration ? 45 : 75;
+
+    // Dim D: Liability & Indemnification Mutuality
+    const hasIndemnity = textLower.includes("indemnif") || textLower.includes("hold harmless");
+    const hasLiabilityCap = textLower.includes("limitation of liability") || textLower.includes("aggregate liability");
+    const liabilityScore = hasLiabilityCap ? 80 : hasIndemnity ? 55 : 75;
+
+    const overallScore = Math.round((termScore + ipScore + covenantScore + liabilityScore) / 4);
+
+    let assessment = "Balanced & Reciprocal";
+    if (overallScore < 60) {
+      assessment = `Unilateral / Weighted toward ${doc.summary?.parties[0] || "Drafting Party"} (${overallScore}/100)`;
+    } else if (overallScore < 80) {
+      assessment = `Moderately Balanced with Specific Asymmetries (${overallScore}/100)`;
+    } else {
+      assessment = `Highly Balanced & Mutual (${overallScore}/100)`;
+    }
+
+    const symmetry: ContractSymmetryScore = {
+      overallScore,
+      assessment,
+      dimensions: [
+        {
+          name: "Termination & Notice Reciprocity",
+          score: termScore,
+          status: termScore >= 80 ? "balanced" : "favors_party_a",
+          note: hasCurePeriod
+            ? "Reciprocal notice windows with explicit cure rights before default."
+            : "Termination for cause lacks mandatory notice or cure remedy periods.",
+        },
+        {
+          name: "Intellectual Property Ownership Scope",
+          score: ipScore,
+          status: ipScore >= 80 ? "balanced" : "unilateral",
+          note: hasCarveout
+            ? "Protective carve-out for prior inventions and off-duty creations identified."
+            : "Broad assignment captures inventions without explicit exclusion for pre-existing personal works.",
+        },
+        {
+          name: "Post-Termination Restrictive Covenants",
+          score: covenantScore,
+          status: covenantScore >= 80 ? "balanced" : "unilateral",
+          note: !hasNonCompete
+            ? "No non-competition restrictions found."
+            : isLongDuration
+            ? "12+ month non-competition restrictions impose substantial career limitation post-departure."
+            : "Moderate post-termination restrictions with defined duration and sector boundaries.",
+        },
+        {
+          name: "Liability Cap & Indemnity Symmetry",
+          score: liabilityScore,
+          status: liabilityScore >= 80 ? "balanced" : "favors_party_a",
+          note: hasLiabilityCap
+            ? "Financial exposure capped with mutual risk allocation."
+            : "No explicit aggregate monetary liability cap detected for defensive claims.",
+        },
+      ],
+    };
+
+    // 2. Scan for Missing Protections (Negative Space Analysis)
+    const missingProtections: MissingProtection[] = [];
+
+    if (!hasCurePeriod) {
+      missingProtections.push({
+        id: "miss-cure",
+        category: "Termination",
+        title: "Absence of Cure Period for Breaches",
+        description: "The contract allows immediate termination for cause without granting an opportunity (e.g. 15 to 30 days) to cure inadvertent or technical infractions.",
+        riskSeverity: "high",
+        recommendedRemedy: "Request a mandatory 15-day or 30-day written notice and cure period before any for-cause termination can become effective.",
+        sampleCounterLanguage: "Provided, however, that Company shall provide Executive with written notice specifying the nature of such Cause, and Executive shall have fifteen (15) business days following receipt of such notice to cure such infraction prior to termination becoming effective.",
+      });
+    }
+
+    if (!hasCarveout && hasIP) {
+      missingProtections.push({
+        id: "miss-carveout",
+        category: "Intellectual Property",
+        title: "Missing Prior Inventions Carve-out Exhibit",
+        description: "All intellectual property created during employment is assigned, but there is no explicit Schedule or Exhibit A protecting pre-existing projects developed on personal time.",
+        riskSeverity: "high",
+        recommendedRemedy: "Add an explicit exclusion stating that inventions developed prior to signing or built without company equipment remain your sole property.",
+        sampleCounterLanguage: "Inventions developed by Executive prior to the Effective Date (as listed on Exhibit A), or developed entirely on Executive's personal time without use of Company resources, are expressly excluded from assignment.",
+      });
+    }
+
+    if (!hasLiabilityCap) {
+      missingProtections.push({
+        id: "miss-cap",
+        category: "Liability",
+        title: "No Aggregate Liability Cap",
+        description: "There is no contractual ceiling limiting total cumulative financial liability in the event of an alleged breach or third-party claim.",
+        riskSeverity: "moderate",
+        recommendedRemedy: "Cap total liability to the amount of compensation paid or payable under the contract in the preceding 6-12 months.",
+        sampleCounterLanguage: "In no event shall either party's aggregate liability arising out of or related to this Agreement exceed the total compensation paid or payable under this Agreement in the twelve (12) months preceding the claim.",
+      });
+    }
+
+    if (!textLower.includes("mutual indemn") && textLower.includes("indemnif")) {
+      missingProtections.push({
+        id: "miss-mutual-indem",
+        category: "Indemnification",
+        title: "Unilateral Indemnification Obligation",
+        description: "Indemnification obligations appear one-sided, requiring one party to defend the other without reciprocal indemnification for company defaults.",
+        riskSeverity: "moderate",
+        recommendedRemedy: "Make indemnification obligations strictly mutual or negotiate reciprocal hold-harmless protection.",
+        sampleCounterLanguage: "Each party shall defend, indemnify, and hold harmless the other party from and against any third-party claims arising from gross negligence or material breach.",
+      });
+    }
+
+    // 3. Negotiation Counter-Proposals for High-Attention Clauses
+    const counterProposals: CounterProposal[] = [];
+    const flaggedClauses = (doc.clauses || []).filter((c) => c.attentionLevel === "NEEDS_ATTENTION");
+
+    flaggedClauses.forEach((c) => {
+      const cLower = c.title.toLowerCase() + " " + c.explanation.toLowerCase();
+      if (cLower.includes("non-compete") || cLower.includes("restrictive")) {
+        counterProposals.push({
+          clauseId: c.id,
+          clauseTitle: c.title,
+          originalTextSummary: c.explanation,
+          negotiationObjective: "Reduce duration from 12 to 6 months, limit to direct competitors, and tie to paid severance.",
+          suggestedWording: "During the term and for six (6) months following termination, Executive shall not hold an equity interest or work for a direct competitor exclusively in the generative legal software sector, provided Company continues payment of base salary during such restricted period.",
+          talkingPoints: [
+            "A 12-month post-employment restriction without ongoing compensation creates unreasonable economic hardship.",
+            "Narrowing to direct competitors prevents accidental career blockage in adjacent tech industries.",
+          ],
+        });
+      } else if (cLower.includes("intellectual property") || cLower.includes("invention")) {
+        counterProposals.push({
+          clauseId: c.id,
+          clauseTitle: c.title,
+          originalTextSummary: c.explanation,
+          negotiationObjective: "Carve out off-duty personal creations and pre-existing open source contributions.",
+          suggestedWording: "Executive shall retain sole ownership of inventions conceived on personal time without the use of Company equipment, proprietary trade secrets, or confidential facilities.",
+          talkingPoints: [
+            "Ensures personal hobby projects and prior open-source work are not retroactively captured.",
+            "Standard practice in software engineering contracts (aligned with California Labor Code § 2870 principles).",
+          ],
+        });
+      } else if (cLower.includes("termination")) {
+        counterProposals.push({
+          clauseId: c.id,
+          clauseTitle: c.title,
+          originalTextSummary: c.explanation,
+          negotiationObjective: "Equalize notice periods and establish a mandatory cure window.",
+          suggestedWording: "Termination without cause shall require sixty (60) days' written notice by either party, with continuation of medical coverage during the notice period.",
+          talkingPoints: [
+            "Allows adequate transitional time to ensure a professional handover.",
+            "Reciprocal notice demonstrates mutual operational commitment.",
+          ],
+        });
+      }
+    });
+
+    return {
+      documentId: doc.id,
+      symmetry,
+      missingProtections,
+      counterProposals,
     };
   }
 }

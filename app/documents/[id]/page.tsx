@@ -19,12 +19,17 @@ import {
   Briefcase,
   ChevronDown,
   Filter,
+  Scale,
+  Copy,
+  Check,
+  AlertTriangle,
+  ShieldAlert,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AttentionBadge } from "@/components/shared/attention-badge";
 import { DisclaimerBanner } from "@/components/shared/disclaimer-banner";
-import { LegalDocument, ClauseAnalysis, KeyFinding, ClauseCategory } from "@/lib/types";
+import { LegalDocument, ClauseAnalysis, KeyFinding, ClauseCategory, AdvancedIntelligenceReport } from "@/lib/types";
 
 export default function DocumentAnalysisPage() {
   const params = useParams();
@@ -36,8 +41,8 @@ export default function DocumentAnalysisPage() {
   const [isLoading, setIsLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
 
-  // Active view tab for right panel: "clauses" | "findings" | "summary" | "qa"
-  const [activeAnalysisTab, setActiveAnalysisTab] = React.useState<"clauses" | "findings" | "summary" | "qa">("clauses");
+  // Active view tab for right panel: "clauses" | "findings" | "summary" | "qa" | "fairness"
+  const [activeAnalysisTab, setActiveAnalysisTab] = React.useState<"clauses" | "findings" | "summary" | "qa" | "fairness">("clauses");
   
   // Mobile responsive view toggle: "doc" | "analysis"
   const [mobileTab, setMobileTab] = React.useState<"doc" | "analysis">("analysis");
@@ -55,6 +60,11 @@ export default function DocumentAnalysisPage() {
   const [questionInput, setQuestionInput] = React.useState("");
   const [isAsking, setIsAsking] = React.useState(false);
   const [qaHistory, setQaHistory] = React.useState<any[]>([]);
+
+  // Advanced Intelligence (Symmetry & Missing Protections)
+  const [intelligenceReport, setIntelligenceReport] = React.useState<AdvancedIntelligenceReport | null>(null);
+  const [isLoadingReport, setIsLoadingReport] = React.useState(false);
+  const [copiedSnippetId, setCopiedSnippetId] = React.useState<string | null>(null);
 
   // Fetch document details and list of available documents
   React.useEffect(() => {
@@ -110,6 +120,35 @@ export default function DocumentAnalysisPage() {
           }
         }
       }, 100);
+    }
+  };
+
+  // Load Advanced Intelligence (Symmetry & Missing Protections)
+  const loadAdvancedIntelligence = async () => {
+    if (!currentDoc || isLoadingReport) return;
+    setIsLoadingReport(true);
+    try {
+      const res = await fetch("/api/advanced-analysis", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ documentId: currentDoc.id }),
+      });
+      const data = await res.json();
+      if (data.report) {
+        setIntelligenceReport(data.report);
+      }
+    } catch {
+      // Non-blocking
+    } finally {
+      setIsLoadingReport(false);
+    }
+  };
+
+  const handleCopySnippet = (id: string, text: string) => {
+    if (typeof navigator !== "undefined" && navigator.clipboard) {
+      navigator.clipboard.writeText(text);
+      setCopiedSnippetId(id);
+      setTimeout(() => setCopiedSnippetId(null), 2000);
     }
   };
 
@@ -402,6 +441,27 @@ export default function DocumentAnalysisPage() {
                     {qaHistory.length}
                   </span>
                 )}
+              </button>
+              <button
+                role="tab"
+                aria-selected={activeAnalysisTab === "fairness"}
+                onClick={() => {
+                  setActiveAnalysisTab("fairness");
+                  if (!intelligenceReport) {
+                    loadAdvancedIntelligence();
+                  }
+                }}
+                className={`px-3.5 py-2 text-xs font-semibold rounded-t-lg transition-colors border-b-2 flex items-center gap-1.5 ${
+                  activeAnalysisTab === "fairness"
+                    ? "border-primary-800 text-primary-950 bg-primary-50/50"
+                    : "border-transparent text-slate-600 hover:text-slate-900"
+                }`}
+              >
+                <Scale className="w-3.5 h-3.5 text-primary-700" />
+                <span>Fairness & Missing Terms</span>
+                <span className="px-1.5 py-0.5 text-[9px] font-bold rounded-full bg-amber-100 text-amber-800 border border-amber-200">
+                  Unique AI
+                </span>
               </button>
             </div>
           </div>
@@ -799,6 +859,363 @@ export default function DocumentAnalysisPage() {
                       </CardContent>
                     </Card>
                   ))
+                )}
+              </div>
+            )}
+
+            {/* ========================================================
+                TAB 5: CONTRACT FAIRNESS, MISSING PROTECTIONS & COUNTER-PROPOSALS
+               ======================================================== */}
+            {activeAnalysisTab === "fairness" && (
+              <div className="space-y-6">
+                {/* Intro Hero Card */}
+                <div className="rounded-xl border border-primary-100 bg-gradient-to-r from-primary-900 to-primary-950 p-5 text-white shadow-sm">
+                  <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+                    <div>
+                      <div className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[10px] font-bold tracking-wide uppercase bg-amber-400 text-slate-950 mb-2">
+                        <Sparkles className="w-3 h-3" />
+                        Proprietary Intelligence
+                      </div>
+                      <h3 className="text-base font-bold text-white tracking-tight">
+                        Contract Symmetry & Negative Space Radar
+                      </h3>
+                      <p className="text-xs text-primary-200 mt-1 max-w-xl leading-relaxed">
+                        Evaluates unilateral power balances, identifies dangerous protective terms that were omitted from this draft, and provides calibrated counter-language for negotiations.
+                      </p>
+                    </div>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={loadAdvancedIntelligence}
+                      disabled={isLoadingReport}
+                      className="shrink-0 bg-white/10 hover:bg-white/20 text-white border-white/20 text-xs"
+                    >
+                      {isLoadingReport ? "Analyzing..." : "Re-scan Terms"}
+                    </Button>
+                  </div>
+                </div>
+
+                {isLoadingReport && !intelligenceReport && (
+                  <div className="p-12 text-center bg-white rounded-xl border border-slate-200">
+                    <div className="inline-block animate-spin w-8 h-8 border-4 border-primary-900 border-t-transparent rounded-full mb-3" />
+                    <p className="text-xs font-semibold text-slate-800">
+                      Scanning contract symmetry and negative space omissions...
+                    </p>
+                    <p className="text-[11px] text-slate-500 mt-1">
+                      Evaluating bilateral risk allocation, IP exclusions, and missing standard remedies.
+                    </p>
+                  </div>
+                )}
+
+                {intelligenceReport && (
+                  <>
+                    {/* SECTION 1: POWER BALANCE & SYMMETRY METER */}
+                    <Card className="border-slate-200 bg-white shadow-xs">
+                      <CardHeader className="p-4 sm:p-5 border-b border-slate-100">
+                        <div className="flex items-center justify-between">
+                          <div className="flex items-center gap-2">
+                            <Scale className="w-4 h-4 text-primary-800" />
+                            <CardTitle className="text-sm font-bold text-slate-900">
+                              Contract Power Balance & Symmetry Score
+                            </CardTitle>
+                          </div>
+                          <span className="text-[11px] text-slate-500 font-mono">
+                            0 = Fully Unilateral | 100 = Fully Reciprocal
+                          </span>
+                        </div>
+                      </CardHeader>
+                      <CardContent className="p-4 sm:p-5 space-y-5">
+                        {/* Overall Gauge Banner */}
+                        <div className="p-4 rounded-xl bg-slate-50 border border-slate-200 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
+                          <div className="flex items-center gap-4">
+                            <div
+                              className={`w-16 h-16 rounded-2xl flex flex-col items-center justify-center font-bold text-white shrink-0 shadow-sm ${
+                                intelligenceReport.symmetry.overallScore >= 80
+                                  ? "bg-emerald-600"
+                                  : intelligenceReport.symmetry.overallScore >= 60
+                                  ? "bg-amber-600"
+                                  : "bg-rose-600"
+                              }`}
+                            >
+                              <span className="text-2xl leading-none">
+                                {intelligenceReport.symmetry.overallScore}
+                              </span>
+                              <span className="text-[10px] font-normal uppercase opacity-90">
+                                / 100
+                              </span>
+                            </div>
+                            <div>
+                              <div className="flex items-center gap-2">
+                                <span className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                                  Balance Assessment
+                                </span>
+                              </div>
+                              <h4 className="text-sm font-bold text-slate-900 mt-0.5">
+                                {intelligenceReport.symmetry.assessment}
+                              </h4>
+                              <p className="text-xs text-slate-600 mt-1">
+                                {intelligenceReport.symmetry.overallScore < 70
+                                  ? "This document exhibits structural imbalances where burdens fall disproportionately on one party while protections favor the other."
+                                  : "This agreement features a reasonable level of reciprocal obligations and bilateral protections."}
+                              </p>
+                            </div>
+                          </div>
+                        </div>
+
+                        {/* Dimensional Breakdown Progress Bars */}
+                        <div className="space-y-3 pt-2">
+                          <h5 className="text-xs font-bold uppercase tracking-wider text-slate-500">
+                            Key Dimension Parity Breakdown
+                          </h5>
+                          <div className="grid grid-cols-1 gap-3">
+                            {intelligenceReport.symmetry.dimensions.map((dim, idx) => (
+                              <div
+                                key={idx}
+                                className="p-3.5 rounded-lg border border-slate-100 bg-slate-50/50 hover:bg-slate-50 transition-colors space-y-2"
+                              >
+                                <div className="flex items-center justify-between text-xs">
+                                  <span className="font-semibold text-slate-900">
+                                    {dim.name}
+                                  </span>
+                                  <div className="flex items-center gap-2">
+                                    <span
+                                      className={`px-2 py-0.5 rounded text-[10px] font-bold uppercase ${
+                                        dim.status === "balanced"
+                                          ? "bg-emerald-100 text-emerald-800 border border-emerald-200"
+                                          : dim.status === "unilateral"
+                                          ? "bg-rose-100 text-rose-800 border border-rose-200"
+                                          : "bg-amber-100 text-amber-800 border border-amber-200"
+                                      }`}
+                                    >
+                                      {dim.status.replace("_", " ")}
+                                    </span>
+                                    <span className="font-mono font-bold text-slate-700">
+                                      {dim.score}%
+                                    </span>
+                                  </div>
+                                </div>
+                                <div className="h-2 w-full bg-slate-200 rounded-full overflow-hidden">
+                                  <div
+                                    className={`h-full rounded-full transition-all duration-500 ${
+                                      dim.score >= 80
+                                        ? "bg-emerald-600"
+                                        : dim.score >= 60
+                                        ? "bg-amber-500"
+                                        : "bg-rose-500"
+                                    }`}
+                                    style={{ width: `${dim.score}%` }}
+                                  />
+                                </div>
+                                <p className="text-[11px] text-slate-600 leading-normal">
+                                  {dim.note}
+                                </p>
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      </CardContent>
+                    </Card>
+
+                    {/* SECTION 2: NEGATIVE SPACE SCANNER (MISSING PROTECTIONS) */}
+                    <div className="space-y-3">
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <ShieldAlert className="w-4 h-4 text-rose-600" />
+                            <h4 className="text-sm font-bold text-slate-900">
+                              Negative Space Scanner — Missing Standard Protections
+                            </h4>
+                          </div>
+                          <p className="text-xs text-slate-600 mt-0.5">
+                            Standard protective clauses that are absent from this draft, exposing you to avoidable legal exposure.
+                          </p>
+                        </div>
+                        <span className="px-2 py-0.5 text-xs font-bold rounded-full bg-rose-100 text-rose-800 border border-rose-200">
+                          {intelligenceReport.missingProtections.length} Gaps Detected
+                        </span>
+                      </div>
+
+                      <div className="space-y-3">
+                        {intelligenceReport.missingProtections.map((gap) => (
+                          <Card
+                            key={gap.id}
+                            className="border-slate-200 bg-white shadow-xs overflow-hidden"
+                          >
+                            <div className="p-4 border-b border-slate-100 flex items-start justify-between gap-3 bg-slate-50/50">
+                              <div className="space-y-1">
+                                <div className="flex items-center gap-2">
+                                  <span className="text-[10px] font-bold uppercase tracking-wider text-slate-500 bg-slate-200 px-1.5 py-0.5 rounded">
+                                    {gap.category}
+                                  </span>
+                                  <span
+                                    className={`text-[10px] font-bold uppercase px-2 py-0.5 rounded-full ${
+                                      gap.riskSeverity === "high"
+                                        ? "bg-rose-100 text-rose-800 border border-rose-200"
+                                        : "bg-amber-100 text-amber-800 border border-amber-200"
+                                    }`}
+                                  >
+                                    {gap.riskSeverity === "high" ? "High Risk Gap" : "Moderate Risk Gap"}
+                                  </span>
+                                </div>
+                                <h5 className="text-xs font-bold text-slate-900 mt-1">
+                                  {gap.title}
+                                </h5>
+                              </div>
+                            </div>
+
+                            <CardContent className="p-4 space-y-3 text-xs">
+                              <div>
+                                <span className="text-[10px] font-bold uppercase text-slate-400 block mb-0.5">
+                                  The Legal Risk
+                                </span>
+                                <p className="text-slate-700 leading-relaxed">
+                                  {gap.description}
+                                </p>
+                              </div>
+
+                              <div className="p-3 rounded-lg bg-blue-50/70 border border-blue-200/80 text-blue-950">
+                                <span className="text-[10px] font-bold uppercase text-blue-800 block mb-1">
+                                  Recommended Remedy
+                                </span>
+                                <p className="leading-relaxed">
+                                  {gap.recommendedRemedy}
+                                </p>
+                              </div>
+
+                              {gap.sampleCounterLanguage && (
+                                <div className="p-3.5 rounded-lg bg-slate-900 text-slate-100 space-y-2">
+                                  <div className="flex items-center justify-between text-[11px] text-slate-300">
+                                    <span className="font-semibold text-amber-400 flex items-center gap-1.5">
+                                      <Sparkles className="w-3.5 h-3.5" />
+                                      Suggested Protective Clause to Insert:
+                                    </span>
+                                    <button
+                                      onClick={() => handleCopySnippet(gap.id, gap.sampleCounterLanguage!)}
+                                      className="inline-flex items-center gap-1 px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-white font-medium text-[11px] transition-colors"
+                                    >
+                                      {copiedSnippetId === gap.id ? (
+                                        <>
+                                          <Check className="w-3 h-3 text-emerald-400" />
+                                          <span className="text-emerald-400">Copied!</span>
+                                        </>
+                                      ) : (
+                                        <>
+                                          <Copy className="w-3 h-3" />
+                                          <span>Copy Clause</span>
+                                        </>
+                                      )}
+                                    </button>
+                                  </div>
+                                  <blockquote className="font-mono text-[11px] text-slate-200 leading-relaxed italic border-l-2 border-amber-400 pl-3">
+                                    "{gap.sampleCounterLanguage}"
+                                  </blockquote>
+                                </div>
+                              )}
+                            </CardContent>
+                          </Card>
+                        ))}
+                      </div>
+                    </div>
+
+                    {/* SECTION 3: STRATEGIC COUNTER-PROPOSAL ENGINE */}
+                    {intelligenceReport.counterProposals.length > 0 && (
+                      <div className="space-y-3 pt-2">
+                        <div>
+                          <div className="flex items-center gap-2">
+                            <Sparkles className="w-4 h-4 text-amber-600" />
+                            <h4 className="text-sm font-bold text-slate-900">
+                              Negotiation Counter-Proposals & Talking Points
+                            </h4>
+                          </div>
+                          <p className="text-xs text-slate-600 mt-0.5">
+                            Calibrated counter-proposals to push back against one-sided terms without alienating the other party.
+                          </p>
+                        </div>
+
+                        <div className="space-y-4">
+                          {intelligenceReport.counterProposals.map((cp) => (
+                            <Card
+                              key={cp.clauseId}
+                              className="border-slate-200 bg-white shadow-xs overflow-hidden"
+                            >
+                              <CardHeader className="p-4 pb-2 bg-amber-50/30 border-b border-amber-100">
+                                <span className="text-[10px] font-bold uppercase text-amber-900">
+                                  Target Clause
+                                </span>
+                                <h5 className="text-xs font-bold text-slate-900">
+                                  {cp.clauseTitle}
+                                </h5>
+                                <p className="text-[11px] text-slate-600">
+                                  {cp.originalTextSummary}
+                                </p>
+                              </CardHeader>
+                              <CardContent className="p-4 space-y-3 text-xs">
+                                <div>
+                                  <span className="text-[10px] font-bold uppercase text-slate-500 block mb-0.5">
+                                    Strategic Objective
+                                  </span>
+                                  <p className="font-semibold text-slate-900">
+                                    {cp.negotiationObjective}
+                                  </p>
+                                </div>
+
+                                <div className="p-3.5 rounded-lg bg-slate-900 text-slate-100 space-y-2">
+                                  <div className="flex items-center justify-between text-[11px] text-slate-300">
+                                    <span className="font-semibold text-emerald-400">
+                                      Proposed Compromise Language:
+                                    </span>
+                                    <button
+                                      onClick={() => handleCopySnippet(cp.clauseId, cp.suggestedWording)}
+                                      className="inline-flex items-center gap-1 px-2 py-1 rounded bg-slate-800 hover:bg-slate-700 text-white font-medium text-[11px] transition-colors"
+                                    >
+                                      {copiedSnippetId === cp.clauseId ? (
+                                        <>
+                                          <Check className="w-3 h-3 text-emerald-400" />
+                                          <span className="text-emerald-400">Copied!</span>
+                                        </>
+                                      ) : (
+                                        <>
+                                          <Copy className="w-3 h-3" />
+                                          <span>Copy Proposal</span>
+                                        </>
+                                      )}
+                                    </button>
+                                  </div>
+                                  <blockquote className="font-mono text-[11px] text-slate-200 leading-relaxed italic border-l-2 border-emerald-400 pl-3">
+                                    "{cp.suggestedWording}"
+                                  </blockquote>
+                                </div>
+
+                                <div>
+                                  <span className="text-[10px] font-bold uppercase text-slate-500 block mb-1">
+                                    Tactical Talking Points (Why this is standard & fair)
+                                  </span>
+                                  <ul className="space-y-1.5">
+                                    {cp.talkingPoints.map((tp, tpIdx) => (
+                                      <li
+                                        key={tpIdx}
+                                        className="flex items-start gap-2 text-slate-700 text-[11px] leading-relaxed"
+                                      >
+                                        <CheckCircle2 className="w-3.5 h-3.5 text-emerald-600 shrink-0 mt-0.5" />
+                                        <span>{tp}</span>
+                                      </li>
+                                    ))}
+                                  </ul>
+                                </div>
+                              </CardContent>
+                            </Card>
+                          ))}
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Legal Disclaimer */}
+                    <div className="p-3 rounded-lg bg-amber-50/50 border border-amber-200/80 text-[11px] text-amber-900 leading-relaxed">
+                      <p>
+                        <strong>Disclaimer:</strong> Contract symmetry scoring, missing protection detection, and counter-proposals are automated informational aids to facilitate discussion. They do not constitute legal advice or formal attorney representation. Always review proposed edits with a qualified legal professional.
+                      </p>
+                    </div>
+                  </>
                 )}
               </div>
             )}
