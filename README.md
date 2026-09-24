@@ -5,8 +5,9 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 [![Next.js 14](https://img.shields.io/badge/Next.js-14.2-black.svg)](https://nextjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.7-blue.svg)](https://www.typescriptlang.org/)
+[![Database: Neon](https://img.shields.io/badge/Database-Neon%20Serverless%20Postgres-00E599.svg)](https://neon.tech/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind-3.4-38bdf8.svg)](https://tailwindcss.com/)
-[![Tests Passing](https://img.shields.io/badge/Tests-Vitest%20Passed-emerald.svg)](tests/)
+[![Tests Passing](https://img.shields.io/badge/Tests-33%20Vitest%20Passed-emerald.svg)](tests/)
 [![Accessibility](https://img.shields.io/badge/WCAG-AAA%20Compliant-purple.svg)](app/globals.css)
 
 LexiGuide is an evidence-first, AI-powered legal document intelligence platform engineered to help individuals and professionals understand, compare, and navigate legal documents with clarity and speed.
@@ -68,22 +69,32 @@ Every insight links directly to the specific page and section of the uploaded do
 
 ### 🔍 1. Understand (Split-Screen Document Viewer)
 - Side-by-side workspace: original document with section anchors on the left, structured AI analysis on the right.
-- Clicking **"View Source"** instantly scrolls to and highlights the target clause in the left pane.
+- Clicking **"View Source"** instantly smooth-scrolls to and highlights the target clause with a gold aura in the left pane.
 - Summarizes document type, parties, effective dates, durations, and major obligations.
 
-### ⚖️ 2. Compare (Contract Comparison Matrix)
+### 📊 2. Contract Symmetry & Power Balance Radar (Unique AI Feature)
+- Quantifies contractual power parity with an overall **0 to 100 Symmetry Score**.
+- Evaluates reciprocity across 4 critical commercial dimensions:
+  - *Termination & Notice Parity* (detects absence of cure windows or unilateral termination).
+  - *Intellectual Property Scope* (verifies pre-existing invention carveouts).
+  - *Post-Termination Covenants* (evaluates restrictive non-compete durations and geographic overreach).
+  - *Liability & Indemnification Mutuality* (checks monetary caps and defense reciprocity).
+
+### 🛡️ 3. Negative Space Scanner (What's Missing from the Draft)
+- The highest risk in commercial agreements is often what was left out entirely.
+- Automatically identifies omitted industry-standard protections (missing cure periods, missing prior IP schedules, lack of aggregate liability ceilings).
+- Provides **1-click "Copy Protective Clause"** to immediately grab calibrated amendment language.
+
+### 🤝 4. Negotiation Counter-Proposal Engine
+- For clauses flagged with high attention levels, generates calibrated compromise proposals.
+- Equips the user with **tactical talking points** explaining why the proposed revision is industry-standard, facilitating respectful and productive negotiations.
+
+### ⚖️ 5. Compare (Contract Comparison Matrix)
 - Compares two document versions (e.g. Baseline vs Counter-Proposal).
 - Side-by-side comparative matrix across 10 critical legal categories: Parties, Payment, Duration, Termination, Renewal, Confidentiality, Intellectual Property, Liability, Dispute Resolution, Governing Law.
 - Plain-language explanation of substantive differences with citations to both Document A and Document B.
 
-### 🎯 3. Identify (3-Tier Attention System)
-- Classifies provisions into three measured tiers:
-  - `INFORMATION`: Standard operational and boilerplate clauses.
-  - `IMPORTANT`: Substantive terms shaping financial obligations, notice triggers, or cure periods.
-  - `NEEDS ATTENTION`: Provisions warranting professional discussion, such as post-employment non-competes, broad IP captures, or unilateral indemnities.
-- Strictly avoids alarmist or invalid legal declarations.
-
-### 💼 4. Prepare (Legal Consultation Brief)
+### 💼 6. Prepare (Legal Consultation Brief)
 - Prepares users for meetings with licensed attorneys.
 - Generates:
   - Neutral Situation Summary
@@ -91,9 +102,9 @@ Every insight links directly to the specific page and section of the uploaded do
   - Tailored questions to ask counsel
   - Interactive **Documents to Bring** checklist
   - Interactive **Information to Prepare** checklist
-  - One-click print/PDF export
+  - One-click **Print to PDF** and **Export to Markdown (`.md`)**.
 
-### 💬 5. Document Q&A (Grounded RAG)
+### 💬 7. Document Q&A (Grounded RAG)
 - Inquires about termination rules, compensation schedules, IP assignments, and liabilities.
 - Returns plain-language response + exact verbatim evidence passage + source reference (`Document → Page → Section`).
 - Safe refusal mechanism: If a query cannot be answered from the document, states: *"I couldn't determine this from the provided document."*
