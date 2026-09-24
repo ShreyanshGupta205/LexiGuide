@@ -279,6 +279,10 @@ Open [http://localhost:3000](http://localhost:3000) in your browser.
 LexiGuide operates in **Zero-Configuration Mode** by default. Providing API keys is entirely optional:
 
 ```env
+# Optional: Neon Serverless PostgreSQL Database Connection
+# Providing this connection string enables persistent cloud database storage with auto-migrated schema
+DATABASE_URL=postgresql://user:password@ep-sample-pooler.us-east-2.aws.neon.tech/neondb?sslmode=require
+
 # Optional: Activates Gemini LLM Provider (falls back to Local Engine if unset)
 GEMINI_API_KEY=your_gemini_api_key_here
 
