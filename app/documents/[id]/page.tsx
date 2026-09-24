@@ -32,6 +32,7 @@ export default function DocumentAnalysisPage() {
   const docId = params.id as string;
 
   const [currentDoc, setCurrentDoc] = React.useState<LegalDocument | null>(null);
+  const [allDocs, setAllDocs] = React.useState<any[]>([]);
   const [isLoading, setIsLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
 
@@ -55,7 +56,7 @@ export default function DocumentAnalysisPage() {
   const [isAsking, setIsAsking] = React.useState(false);
   const [qaHistory, setQaHistory] = React.useState<any[]>([]);
 
-  // Fetch document details
+  // Fetch document details and list of available documents
   React.useEffect(() => {
     async function loadDoc() {
       try {
@@ -72,8 +73,20 @@ export default function DocumentAnalysisPage() {
         setIsLoading(false);
       }
     }
+
+    async function loadAllDocs() {
+      try {
+        const res = await fetch("/api/documents");
+        const data = await res.json();
+        setAllDocs(data.documents || []);
+      } catch {
+        // Non-blocking
+      }
+    }
+
     if (docId) {
       loadDoc();
+      loadAllDocs();
     }
   }, [docId]);
 
@@ -187,9 +200,24 @@ export default function DocumentAnalysisPage() {
           <div className="h-4 w-px bg-slate-200" />
           <div className="flex items-center gap-2 truncate">
             <FileText className="w-4 h-4 text-primary-800 shrink-0" />
-            <h1 className="text-sm font-bold text-slate-900 truncate">
-              {currentDoc.fileName}
-            </h1>
+            {allDocs.length > 1 ? (
+              <select
+                value={currentDoc.id}
+                onChange={(e) => router.push(`/documents/${e.target.value}`)}
+                aria-label="Switch active document"
+                className="text-xs sm:text-sm font-bold text-slate-900 bg-transparent border-0 hover:bg-slate-100 rounded px-1.5 py-1 cursor-pointer max-w-[200px] sm:max-w-xs truncate focus:outline-none focus:ring-1 focus:ring-primary-600"
+              >
+                {allDocs.map((d) => (
+                  <option key={d.id} value={d.id}>
+                    {d.fileName}
+                  </option>
+                ))}
+              </select>
+            ) : (
+              <h1 className="text-sm font-bold text-slate-900 truncate">
+                {currentDoc.fileName}
+              </h1>
+            )}
             <span className="hidden md:inline-flex items-center px-2 py-0.5 rounded text-[10px] font-semibold uppercase bg-slate-100 text-slate-600">
               {currentDoc.fileType}
             </span>
