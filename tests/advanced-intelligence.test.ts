@@ -8,9 +8,10 @@ describe("LexiGuide Advanced Intelligence: Symmetry & Negative Space", () => {
   const mockOneSidedDoc: LegalDocument = {
     id: "doc-onesided-test",
     userId: "test-user",
-    filename: "contract_heavy_party_a.txt",
+    fileName: "contract_heavy_party_a.txt",
     fileSize: 2048,
-    fileType: "text/plain",
+    fileType: "txt",
+    status: "analyzed",
     uploadDate: new Date().toISOString(),
     rawText: `
       EMPLOYMENT AND INVENTIONS AGREEMENT
@@ -20,10 +21,10 @@ describe("LexiGuide Advanced Intelligence: Symmetry & Negative Space", () => {
       4. Indemnification: Executive agrees to indemnify and hold harmless Company from any third party losses.
     `,
     sections: [
-      { id: "s1", page: 1, title: "1. Immediate Termination", content: "Company may terminate this Agreement immediately for cause without notice and without any cure period." },
-      { id: "s2", page: 1, title: "2. Intellectual Property Assignment", content: "Executive assigns all inventions, patents, ideas conceived during employment." },
-      { id: "s3", page: 1, title: "3. Non-Compete", content: "Executive shall not compete for 24 months following departure in any territory." },
-      { id: "s4", page: 1, title: "4. Indemnification", content: "Executive agrees to indemnify and hold harmless Company from any third party losses." },
+      { id: "s1", sectionNumber: "1", page: 1, title: "1. Immediate Termination", content: "Company may terminate this Agreement immediately for cause without notice and without any cure period." },
+      { id: "s2", sectionNumber: "2", page: 1, title: "2. Intellectual Property Assignment", content: "Executive assigns all inventions, patents, ideas conceived during employment." },
+      { id: "s3", sectionNumber: "3", page: 1, title: "3. Non-Compete", content: "Executive shall not compete for 24 months following departure in any territory." },
+      { id: "s4", sectionNumber: "4", page: 1, title: "4. Indemnification", content: "Executive agrees to indemnify and hold harmless Company from any third party losses." },
     ],
     clauses: [
       {
@@ -35,6 +36,7 @@ describe("LexiGuide Advanced Intelligence: Symmetry & Negative Space", () => {
         obligations: ["Do not compete for 24 months"],
         importantDates: ["24 months post termination"],
         attentionLevel: "NEEDS_ATTENTION",
+        potentialQuestions: ["What territory is covered?"],
         source: { page: 1, section: "3. Non-Compete" },
       },
       {
@@ -46,15 +48,18 @@ describe("LexiGuide Advanced Intelligence: Symmetry & Negative Space", () => {
         obligations: [],
         importantDates: [],
         attentionLevel: "NEEDS_ATTENTION",
+        potentialQuestions: ["Is there notice required?"],
         source: { page: 1, section: "1. Immediate Termination" },
       },
     ],
     summary: {
       documentType: "Employment Agreement",
       parties: ["Company Corp", "Executive"],
-      keyDates: [],
-      governingLaw: "California",
-      oneSentenceSummary: "One-sided employment agreement with strict non-compete.",
+      effectiveDate: "2026-01-01",
+      duration: "24 months",
+      importantDates: [],
+      majorObligations: ["Do not compete"],
+      majorSections: ["Termination", "Non-Compete"],
     },
     findings: [],
     chunks: [],

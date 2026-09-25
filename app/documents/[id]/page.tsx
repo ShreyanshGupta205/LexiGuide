@@ -24,12 +24,26 @@ import {
   Check,
   AlertTriangle,
   ShieldAlert,
+  Keyboard,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AttentionBadge } from "@/components/shared/attention-badge";
 import { DisclaimerBanner } from "@/components/shared/disclaimer-banner";
+import { KeyboardHelpDialog } from "@/components/document/keyboard-help-dialog";
+import { RedlineViewer } from "@/components/document/redline-viewer";
 import { LegalDocument, ClauseAnalysis, KeyFinding, ClauseCategory, AdvancedIntelligenceReport } from "@/lib/types";
+
+export interface QAHistoryItem {
+  id: string;
+  documentId: string;
+  question: string;
+  answer: string;
+  evidence: string;
+  source: { documentName: string; page: number; section: string; chunkId?: string };
+  confidence: "high" | "moderate" | "unsupported";
+  timestamp: string;
+}
 
 export default function DocumentAnalysisPage() {
   const params = useParams();
@@ -37,7 +51,7 @@ export default function DocumentAnalysisPage() {
   const docId = params.id as string;
 
   const [currentDoc, setCurrentDoc] = React.useState<LegalDocument | null>(null);
-  const [allDocs, setAllDocs] = React.useState<any[]>([]);
+  const [allDocs, setAllDocs] = React.useState<Array<{ id: string; fileName: string }>>([]);
   const [isLoading, setIsLoading] = React.useState(true);
   const [error, setError] = React.useState<string | null>(null);
 
@@ -52,6 +66,7 @@ export default function DocumentAnalysisPage() {
 
   // Left document search
   const [docSearchQuery, setDocSearchQuery] = React.useState("");
+  const searchInputRef = React.useRef<HTMLInputElement | null>(null);
 
   // Highlighted target section ID in left panel
   const [highlightedSectionId, setHighlightedSectionId] = React.useState<string | null>(null);
@@ -59,12 +74,15 @@ export default function DocumentAnalysisPage() {
   // Q&A state
   const [questionInput, setQuestionInput] = React.useState("");
   const [isAsking, setIsAsking] = React.useState(false);
-  const [qaHistory, setQaHistory] = React.useState<any[]>([]);
+  const [qaHistory, setQaHistory] = React.useState<QAHistoryItem[]>([]);
 
   // Advanced Intelligence (Symmetry & Missing Protections)
   const [intelligenceReport, setIntelligenceReport] = React.useState<AdvancedIntelligenceReport | null>(null);
   const [isLoadingReport, setIsLoadingReport] = React.useState(false);
   const [copiedSnippetId, setCopiedSnippetId] = React.useState<string | null>(null);
+
+  // Accessibility: Keyboard Shortcuts modal
+  const [isHelpOpen, setIsHelpOpen] = React.useState(false);
 
   // Fetch document details and list of available documents
   React.useEffect(() => {
@@ -101,7 +119,7 @@ export default function DocumentAnalysisPage() {
   }, [docId]);
 
   // View Source action: Scrolls to and highlights target section in left panel
-  const handleViewSource = (sectionTitle: string, pageNumber: number) => {
+  const handleViewSource = React.useCallback((sectionTitle: string, _pageNumber: number) => {
     // If on mobile, switch to the document tab first
     setMobileTab("doc");
 
@@ -121,10 +139,10 @@ export default function DocumentAnalysisPage() {
         }
       }, 100);
     }
-  };
+  }, [currentDoc]);
 
   // Load Advanced Intelligence (Symmetry & Missing Protections)
-  const loadAdvancedIntelligence = async () => {
+  const loadAdvancedIntelligence = React.useCallback(async () => {
     if (!currentDoc || isLoadingReport) return;
     setIsLoadingReport(true);
     try {
@@ -142,7 +160,62 @@ export default function DocumentAnalysisPage() {
     } finally {
       setIsLoadingReport(false);
     }
-  };
+  }, [currentDoc, isLoadingReport]);
+
+  // Accessibility: Global keyboard shortcut handler
+  React.useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement;
+      const isInput = target.tagName === "INPUT" || target.tagName === "TEXTAREA" || target.isContentEditable;
+
+      if (e.key === "Escape") {
+        setIsHelpOpen(false);
+        setHighlightedSectionId(null);
+        if (isInput) (target as HTMLInputElement).blur();
+        return;
+      }
+
+      if (isInput) return;
+
+      if (e.key === "/") {
+        e.preventDefault();
+        searchInputRef.current?.focus();
+      } else if (e.key === "?") {
+        e.preventDefault();
+        setIsHelpOpen((prev) => !prev);
+      } else if (e.key === "1") {
+        setActiveAnalysisTab("clauses");
+      } else if (e.key === "2") {
+        setActiveAnalysisTab("findings");
+      } else if (e.key === "3") {
+        setActiveAnalysisTab("summary");
+      } else if (e.key === "4") {
+        setActiveAnalysisTab("qa");
+      } else if (e.key === "5") {
+        setActiveAnalysisTab("fairness");
+        if (!intelligenceReport) loadAdvancedIntelligence();
+      } else if (e.key.toLowerCase() === "j") {
+        // Step to next section
+        if (currentDoc && currentDoc.sections.length > 0) {
+          const currentIndex = currentDoc.sections.findIndex((s) => s.id === highlightedSectionId);
+          const nextIndex = currentIndex < currentDoc.sections.length - 1 ? currentIndex + 1 : 0;
+          const nextSec = currentDoc.sections[nextIndex];
+          handleViewSource(nextSec.title, nextSec.page);
+        }
+      } else if (e.key.toLowerCase() === "k") {
+        // Step to previous section
+        if (currentDoc && currentDoc.sections.length > 0) {
+          const currentIndex = currentDoc.sections.findIndex((s) => s.id === highlightedSectionId);
+          const prevIndex = currentIndex > 0 ? currentIndex - 1 : currentDoc.sections.length - 1;
+          const prevSec = currentDoc.sections[prevIndex];
+          handleViewSource(prevSec.title, prevSec.page);
+        }
+      }
+    };
+
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, [currentDoc, highlightedSectionId, intelligenceReport, handleViewSource, loadAdvancedIntelligence]);
 
   const handleCopySnippet = (id: string, text: string) => {
     if (typeof navigator !== "undefined" && navigator.clipboard) {
@@ -284,6 +357,18 @@ export default function DocumentAnalysisPage() {
             </button>
           </div>
 
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => setIsHelpOpen(true)}
+            className="h-8 px-2 text-xs text-slate-600 hover:text-slate-900 gap-1.5 border border-slate-200"
+            aria-label="Keyboard shortcuts"
+          >
+            <Keyboard className="w-3.5 h-3.5 text-primary-700" />
+            <span className="hidden sm:inline">Shortcuts</span>
+            <kbd className="hidden sm:inline px-1 py-0.5 rounded bg-slate-100 text-[10px] font-mono border">?</kbd>
+          </Button>
+
           <Link href={`/documents/${currentDoc.id}/consultation`}>
             <Button size="sm" variant="outline" className="h-8 text-xs gap-1 border-slate-300">
               <Briefcase className="w-3.5 h-3.5 text-primary-800" />
@@ -325,13 +410,15 @@ export default function DocumentAnalysisPage() {
             <div className="relative w-48 sm:w-64">
               <Search className="absolute left-2.5 top-2 h-3.5 w-3.5 text-slate-400" />
               <input
+                ref={searchInputRef}
                 type="text"
-                placeholder="Find in document..."
+                placeholder="Find in document... (/)"
                 value={docSearchQuery}
                 onChange={(e) => setDocSearchQuery(e.target.value)}
-                className="w-full pl-8 pr-3 py-1 text-xs rounded-md border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-1 focus:ring-primary-600"
+                className="w-full pl-8 pr-7 py-1 text-xs rounded-md border border-slate-200 bg-slate-50 focus:bg-white focus:outline-none focus:ring-1 focus:ring-primary-600 font-sans"
                 aria-label="Search within original document text"
               />
+              <kbd className="absolute right-2 top-1.5 px-1 py-0.2 rounded bg-slate-200/60 text-[10px] font-mono text-slate-500 hidden sm:inline select-none">/</kbd>
             </div>
           </div>
 
@@ -389,8 +476,10 @@ export default function DocumentAnalysisPage() {
           <div className="border-b border-slate-200 bg-white px-4 pt-2 shrink-0 flex items-center justify-between">
             <div className="flex gap-1" role="tablist" aria-label="Analysis Tabs">
               <button
+                id="tab-clauses"
                 role="tab"
                 aria-selected={activeAnalysisTab === "clauses"}
+                aria-controls="panel-clauses"
                 onClick={() => setActiveAnalysisTab("clauses")}
                 className={`px-3.5 py-2 text-xs font-semibold rounded-t-lg transition-colors border-b-2 ${
                   activeAnalysisTab === "clauses"
@@ -401,8 +490,10 @@ export default function DocumentAnalysisPage() {
                 Clauses ({currentDoc.clauses?.length || 0})
               </button>
               <button
+                id="tab-findings"
                 role="tab"
                 aria-selected={activeAnalysisTab === "findings"}
+                aria-controls="panel-findings"
                 onClick={() => setActiveAnalysisTab("findings")}
                 className={`px-3.5 py-2 text-xs font-semibold rounded-t-lg transition-colors border-b-2 ${
                   activeAnalysisTab === "findings"
@@ -413,8 +504,10 @@ export default function DocumentAnalysisPage() {
                 Key Findings ({currentDoc.findings?.length || 0})
               </button>
               <button
+                id="tab-summary"
                 role="tab"
                 aria-selected={activeAnalysisTab === "summary"}
+                aria-controls="panel-summary"
                 onClick={() => setActiveAnalysisTab("summary")}
                 className={`px-3.5 py-2 text-xs font-semibold rounded-t-lg transition-colors border-b-2 ${
                   activeAnalysisTab === "summary"
@@ -425,8 +518,10 @@ export default function DocumentAnalysisPage() {
                 Document Summary
               </button>
               <button
+                id="tab-qa"
                 role="tab"
                 aria-selected={activeAnalysisTab === "qa"}
+                aria-controls="panel-qa"
                 onClick={() => setActiveAnalysisTab("qa")}
                 className={`px-3.5 py-2 text-xs font-semibold rounded-t-lg transition-colors border-b-2 flex items-center gap-1.5 ${
                   activeAnalysisTab === "qa"
@@ -443,8 +538,10 @@ export default function DocumentAnalysisPage() {
                 )}
               </button>
               <button
+                id="tab-fairness"
                 role="tab"
                 aria-selected={activeAnalysisTab === "fairness"}
+                aria-controls="panel-fairness"
                 onClick={() => {
                   setActiveAnalysisTab("fairness");
                   if (!intelligenceReport) {
@@ -472,7 +569,13 @@ export default function DocumentAnalysisPage() {
                 TAB 1: STRUCTURED CLAUSES
                ======================================================== */}
             {activeAnalysisTab === "clauses" && (
-              <div className="space-y-4">
+              <div
+                role="tabpanel"
+                id="panel-clauses"
+                aria-labelledby="tab-clauses"
+                tabIndex={0}
+                className="space-y-4 focus:outline-none"
+              >
                 {/* Category Filter Pills */}
                 <div className="flex items-center gap-1.5 overflow-x-auto pb-1 text-xs">
                   <Filter className="w-3.5 h-3.5 text-slate-400 shrink-0 mr-1" />
@@ -572,7 +675,7 @@ export default function DocumentAnalysisPage() {
                               Questions to Ask Legal Counsel
                             </span>
                             <p className="text-slate-700 italic">
-                              "{clause.potentialQuestions[0]}"
+                              &ldquo;{clause.potentialQuestions[0]}&rdquo;
                             </p>
                           </div>
                         )}
@@ -604,7 +707,13 @@ export default function DocumentAnalysisPage() {
                 TAB 2: KEY FINDINGS BY CATEGORY (Section 12)
                ======================================================== */}
             {activeAnalysisTab === "findings" && (
-              <div className="space-y-4">
+              <div
+                role="tabpanel"
+                id="panel-findings"
+                aria-labelledby="tab-findings"
+                tabIndex={0}
+                className="space-y-4 focus:outline-none"
+              >
                 <div className="p-3 bg-white rounded-xl border border-slate-200 text-xs text-slate-600 leading-relaxed">
                   Key provisions extracted across 10 standard legal categories. Categories not present in this document are explicitly marked.
                 </div>
@@ -669,7 +778,13 @@ export default function DocumentAnalysisPage() {
                 TAB 3: DOCUMENT SUMMARY (Section 12)
                ======================================================== */}
             {activeAnalysisTab === "summary" && (
-              <div className="space-y-4">
+              <div
+                role="tabpanel"
+                id="panel-summary"
+                aria-labelledby="tab-summary"
+                tabIndex={0}
+                className="space-y-4 focus:outline-none"
+              >
                 <Card className="border-slate-200 bg-white shadow-xs">
                   <CardHeader className="p-4 pb-2">
                     <CardTitle className="text-sm font-semibold">Executive Overview</CardTitle>
@@ -755,7 +870,13 @@ export default function DocumentAnalysisPage() {
                 TAB 4: GROUNDED DOCUMENT Q&A (Section 15)
                ======================================================== */}
             {activeAnalysisTab === "qa" && (
-              <div className="space-y-4">
+              <div
+                role="tabpanel"
+                id="panel-qa"
+                aria-labelledby="tab-qa"
+                tabIndex={0}
+                className="space-y-4 focus:outline-none"
+              >
                 {/* Header */}
                 <div className="p-4 rounded-xl bg-white border border-slate-200 shadow-xs space-y-3">
                   <div>
@@ -839,7 +960,7 @@ export default function DocumentAnalysisPage() {
                               Evidence Passage
                             </span>
                             <blockquote className="italic font-mono text-[11px] leading-relaxed">
-                              "{item.evidence}"
+                              &ldquo;{item.evidence}&rdquo;
                             </blockquote>
                           </div>
                         )}
@@ -867,7 +988,13 @@ export default function DocumentAnalysisPage() {
                 TAB 5: CONTRACT FAIRNESS, MISSING PROTECTIONS & COUNTER-PROPOSALS
                ======================================================== */}
             {activeAnalysisTab === "fairness" && (
-              <div className="space-y-6">
+              <div
+                role="tabpanel"
+                id="panel-fairness"
+                aria-labelledby="tab-fairness"
+                tabIndex={0}
+                className="space-y-6 focus:outline-none"
+              >
                 {/* Intro Hero Card */}
                 <div className="rounded-xl border border-primary-100 bg-gradient-to-r from-primary-900 to-primary-950 p-5 text-white shadow-sm">
                   <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
@@ -1107,7 +1234,7 @@ export default function DocumentAnalysisPage() {
                                     </button>
                                   </div>
                                   <blockquote className="font-mono text-[11px] text-slate-200 leading-relaxed italic border-l-2 border-amber-400 pl-3">
-                                    "{gap.sampleCounterLanguage}"
+                                    &ldquo;{gap.sampleCounterLanguage}&rdquo;
                                   </blockquote>
                                 </div>
                               )}
@@ -1159,10 +1286,10 @@ export default function DocumentAnalysisPage() {
                                   </p>
                                 </div>
 
-                                <div className="p-3.5 rounded-lg bg-slate-900 text-slate-100 space-y-2">
-                                  <div className="flex items-center justify-between text-[11px] text-slate-300">
-                                    <span className="font-semibold text-emerald-400">
-                                      Proposed Compromise Language:
+                                <div className="space-y-2">
+                                  <div className="flex items-center justify-between text-xs">
+                                    <span className="font-semibold text-slate-700">
+                                      Interactive Redline Diff
                                     </span>
                                     <button
                                       onClick={() => handleCopySnippet(cp.clauseId, cp.suggestedWording)}
@@ -1181,9 +1308,10 @@ export default function DocumentAnalysisPage() {
                                       )}
                                     </button>
                                   </div>
-                                  <blockquote className="font-mono text-[11px] text-slate-200 leading-relaxed italic border-l-2 border-emerald-400 pl-3">
-                                    "{cp.suggestedWording}"
-                                  </blockquote>
+                                  <RedlineViewer
+                                    originalText={cp.originalTextSummary}
+                                    revisedText={cp.suggestedWording}
+                                  />
                                 </div>
 
                                 <div>
@@ -1222,6 +1350,12 @@ export default function DocumentAnalysisPage() {
           </div>
         </section>
       </div>
+
+      {/* Accessible Keyboard Shortcut Reference Dialog */}
+      <KeyboardHelpDialog
+        isOpen={isHelpOpen}
+        onClose={() => setIsHelpOpen(false)}
+      />
     </div>
   );
 }

@@ -116,7 +116,7 @@ export default function SettingsPage() {
               To connect your live Neon database, add your connection string to <code className="bg-slate-100 px-1 py-0.5 rounded text-slate-800 font-mono">DATABASE_URL</code> in your <code className="bg-slate-100 px-1 py-0.5 rounded text-slate-800 font-mono">.env.local</code> file:
             </p>
             <div className="p-2.5 rounded-lg bg-slate-900 text-slate-200 font-mono text-[11px] overflow-x-auto">
-              DATABASE_URL="postgresql://user:password@ep-sample.us-east-2.aws.neon.tech/neondb?sslmode=require"
+              {'DATABASE_URL="postgresql://user:password@ep-sample.us-east-2.aws.neon.tech/neondb?sslmode=require"'}
             </div>
           </CardContent>
         </Card>

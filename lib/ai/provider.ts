@@ -107,24 +107,34 @@ Return strict JSON matching this structure:
 Document:
 ${sanitizedContext}`;
 
-      const res = await fetch(
-        `https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=${this.apiKey}`,
-        {
-          method: "POST",
-          headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({
-            contents: [{ parts: [{ text: prompt }] }],
-            generationConfig: { responseMimeType: "application/json" },
-          }),
-        }
-      );
+      // Use gemini-flash-latest with local fallback
+      const models = ["gemini-flash-latest", "gemini-2.5-flash"];
+      let rawJson = "";
 
-      if (!res.ok) {
-        throw new Error(`Gemini API error: ${res.statusText}`);
+      for (const model of models) {
+        try {
+          const res = await fetch(
+            `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${this.apiKey}`,
+            {
+              method: "POST",
+              headers: { "Content-Type": "application/json" },
+              body: JSON.stringify({
+                contents: [{ parts: [{ text: prompt }] }],
+                generationConfig: { responseMimeType: "application/json" },
+              }),
+            }
+          );
+
+          if (res.ok) {
+            const data = await res.json();
+            rawJson = data.candidates?.[0]?.content?.parts?.[0]?.text || "";
+            if (rawJson) break;
+          }
+        } catch {
+          // try next model
+        }
       }
 
-      const data = await res.json();
-      const rawJson = data.candidates?.[0]?.content?.parts?.[0]?.text;
       if (!rawJson) {
         throw new Error("Empty model response");
       }
@@ -133,7 +143,11 @@ ${sanitizedContext}`;
       const validated = FullDocumentAnalysisSchema.safeParse(parsed);
 
       if (validated.success) {
-        return validated.data as any;
+        return {
+          summary: validated.data.summary,
+          findings: validated.data.findings,
+          clauses: validated.data.clauses,
+        };
       }
     } catch {
       // Safe fallback to local engine
@@ -146,7 +160,86 @@ ${sanitizedContext}`;
     question: string,
     chunks: DocumentChunk[],
     documentName: string
-  ) {
+  ): Promise<{
+    answer: string;
+    evidence: string;
+    source: { documentName: string; page: number; section: string; chunkId?: string };
+    confidence: "high" | "moderate" | "unsupported";
+  }> {
+    try {
+      const { retrieveRelevantChunks, isRetrievalGrounded } = await import("@/lib/rag/retrieval");
+      const scoredChunks = retrieveRelevantChunks(question, chunks, 3);
+      const isGrounded = isRetrievalGrounded(scoredChunks);
+
+      if (!isGrounded || scoredChunks.length === 0) {
+        return {
+          answer: "I couldn't determine this from the provided document. The text does not contain explicit provisions or terms addressing this question.",
+          evidence: "",
+          source: {
+            documentName,
+            page: 1,
+            section: "Document Search",
+          },
+          confidence: "unsupported",
+        };
+      }
+
+      const best = scoredChunks[0].chunk;
+      const prompt = `${SYSTEM_SAFETY_PREAMBLE}
+
+You are an evidence-grounded legal analysis assistant. Answer the user question based strictly on the provided excerpt from "${documentName}".
+Do not provide legal advice, speculate, or extrapolate beyond the explicit text.
+If the excerpt does not address the question, return confidence "unsupported".
+
+Excerpt (Section: "${best.section}", Page: ${best.page}):
+"""
+${best.text}
+"""
+
+User Question: ${question}
+
+Return strict JSON:
+{
+  "answer": "Plain-language, factual answer explaining what the document states",
+  "evidence": "Exact verbatim sentence or phrase from the excerpt supporting this answer"
+}`;
+
+      const res = await fetch(
+        `https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key=${this.apiKey}`,
+        {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            contents: [{ parts: [{ text: prompt }] }],
+            generationConfig: { responseMimeType: "application/json" },
+          }),
+        }
+      );
+
+      if (res.ok) {
+        const data = await res.json();
+        const rawJson = data.candidates?.[0]?.content?.parts?.[0]?.text;
+        if (rawJson) {
+          const parsed = JSON.parse(rawJson);
+          if (parsed.answer) {
+            return {
+              answer: parsed.answer,
+              evidence: parsed.evidence || (best.text.length > 250 ? best.text.slice(0, 250) + "..." : best.text),
+              source: {
+                documentName,
+                page: best.page,
+                section: best.section,
+                chunkId: best.id,
+              },
+              confidence: "high",
+            };
+          }
+        }
+      }
+    } catch {
+      // Safe fallback to deterministic local engine
+    }
+
     return this.localFallback.answerQuestion(question, chunks, documentName);
   }
 

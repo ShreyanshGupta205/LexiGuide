@@ -208,7 +208,7 @@ export default function QuestionsPage() {
                         Grounded Source Passage
                       </span>
                       <blockquote className="italic font-mono text-[11px] leading-relaxed">
-                        "{item.evidence}"
+                        &ldquo;{item.evidence}&rdquo;
                       </blockquote>
                     </div>
                   )}

@@ -17,23 +17,62 @@ const PROMPT_INJECTION_PATTERNS = [
 
 /**
  * Strips dangerous injection trigger phrases from user questions or input.
+ * Handles Unicode evasion, zero-width obfuscation, and base64 encoded overrides.
  */
 export function sanitizeUserInput(input: string): string {
   if (!input) return "";
 
-  let cleaned = input.trim();
+  // 1. Remove zero-width characters and bidirectional unicode overrides used to evade regex
+  let cleaned = input.replace(/[\u200B-\u200D\uFEFF\u202A-\u202E\u2060-\u206F]/g, "").trim();
 
+  // 2. Inspect potential base64 embedded overrides
+  const base64Matches = cleaned.match(/(?:[A-Za-z0-9+/]{4}){4,}(?:[A-Za-z0-9+/]{2}==|[A-Za-z0-9+/]{3}=)?/g);
+  if (base64Matches) {
+    for (const b64 of base64Matches) {
+      try {
+        const decoded = Buffer.from(b64, "base64").toString("utf-8");
+        for (const pattern of PROMPT_INJECTION_PATTERNS) {
+          if (pattern.test(decoded)) {
+            cleaned = cleaned.replace(b64, "[removed encoded prompt override]");
+            break;
+          }
+        }
+      } catch {
+        // Not valid utf-8 base64 string
+      }
+    }
+  }
+
+  // 3. Match against standard pattern overrides
   for (const pattern of PROMPT_INJECTION_PATTERNS) {
     cleaned = cleaned.replace(pattern, "[removed potential prompt override]");
   }
 
-  // Escape XML/HTML-like delimiter tags that might clash with system wrappers
+  // 4. Escape XML/HTML-like delimiter tags that might clash with system wrappers
   cleaned = cleaned
     .replace(/<\/?[a-z_][a-z0-9_]*[^>]*>/gi, "")
     .replace(/<untrusted_document_context>/gi, "")
     .replace(/<\/untrusted_document_context>/gi, "");
 
   return cleaned;
+}
+
+/**
+ * Validates whether user content poses high prompt injection or jailbreak risk.
+ */
+export function validateContentSafety(text: string): { safe: boolean; reason?: string } {
+  if (!text) return { safe: true };
+
+  for (const pattern of PROMPT_INJECTION_PATTERNS) {
+    if (pattern.test(text)) {
+      return {
+        safe: false,
+        reason: "Input matches known instruction override or jailbreak pattern.",
+      };
+    }
+  }
+
+  return { safe: true };
 }
 
 /**

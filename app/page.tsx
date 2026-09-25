@@ -130,11 +130,11 @@ export default function LandingPage() {
                       SECTION 4.2 Termination Without Cause or Resignation
                     </p>
                     <p className="text-slate-800 text-[11px] leading-relaxed">
-                      "Either party may terminate this Agreement without cause at any time upon providing thirty (30) days' prior written notice to the other party..."
+                      &ldquo;Either party may terminate this Agreement without cause at any time upon providing thirty (30) days&apos; prior written notice to the other party...&rdquo;
                     </p>
                   </div>
                   <p className="text-slate-500 text-[11px]">
-                    SECTION 4.3 Severance. If the Company terminates Executive's employment without Cause, the Executive shall receive...
+                    SECTION 4.3 Severance. If the Company terminates Executive&apos;s employment without Cause, the Executive shall receive...
                   </p>
                 </div>
 
@@ -152,7 +152,7 @@ export default function LandingPage() {
                       Termination Notice Requirement
                     </h3>
                     <p className="text-xs text-slate-600 mt-1 leading-relaxed">
-                      Either party can terminate the agreement by providing 30 days' written notice. Outlines cause and without-cause provisions.
+                      Either party can terminate the agreement by providing 30 days&apos; written notice. Outlines cause and without-cause provisions.
                     </p>
                   </div>
 

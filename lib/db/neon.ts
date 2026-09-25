@@ -70,6 +70,11 @@ export async function initNeonSchema(): Promise<void> {
       );
     `;
 
+    // High-performance B-tree indexes to optimize user queries and prevent full table scans
+    await sql`CREATE INDEX IF NOT EXISTS idx_documents_user_id ON documents(user_id);`;
+    await sql`CREATE INDEX IF NOT EXISTS idx_documents_upload_date ON documents(upload_date DESC);`;
+    await sql`CREATE INDEX IF NOT EXISTS idx_qa_doc_id ON qa_history(document_id);`;
+
     schemaInitialized = true;
   } catch (error) {
     console.error("Failed to initialize Neon schema:", error);

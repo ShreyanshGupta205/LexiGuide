@@ -34,32 +34,14 @@ function CompareContent() {
   const initialDocA = searchParams.get("docA") || "demo-doc-1";
   const initialDocB = searchParams.get("docB") || "demo-doc-2";
 
-  const [availableDocs, setAvailableDocs] = React.useState<any[]>([]);
+  const [availableDocs, setAvailableDocs] = React.useState<Array<{ id: string; fileName: string; fileType: string }>>([]);
   const [docAId, setDocAId] = React.useState(initialDocA);
   const [docBId, setDocBId] = React.useState(initialDocB);
   const [isComparing, setIsComparing] = React.useState(false);
   const [comparisonResult, setComparisonResult] = React.useState<DocumentComparisonResult | null>(null);
   const [error, setError] = React.useState<string | null>(null);
 
-  React.useEffect(() => {
-    async function loadDocs() {
-      try {
-        const res = await fetch("/api/documents");
-        const data = await res.json();
-        setAvailableDocs(data.documents || []);
-
-        // Trigger initial comparison if we have 2 docs
-        if (initialDocA && initialDocB && initialDocA !== initialDocB) {
-          runComparison(initialDocA, initialDocB);
-        }
-      } catch {
-        // Ignore
-      }
-    }
-    loadDocs();
-  }, []);
-
-  const runComparison = async (aId: string, bId: string) => {
+  const runComparison = React.useCallback(async (aId: string, bId: string) => {
     if (!aId || !bId || aId === bId) {
       setError("Please select two different documents to compare.");
       return;
@@ -87,7 +69,25 @@ function CompareContent() {
     } finally {
       setIsComparing(false);
     }
-  };
+  }, []);
+
+  React.useEffect(() => {
+    async function loadDocs() {
+      try {
+        const res = await fetch("/api/documents");
+        const data = await res.json();
+        setAvailableDocs(data.documents || []);
+
+        // Trigger initial comparison if we have 2 docs
+        if (initialDocA && initialDocB && initialDocA !== initialDocB) {
+          runComparison(initialDocA, initialDocB);
+        }
+      } catch {
+        // Ignore
+      }
+    }
+    loadDocs();
+  }, [initialDocA, initialDocB, runComparison]);
 
   return (
     <div className="flex-1 flex">

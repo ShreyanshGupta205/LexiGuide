@@ -2,6 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 import { Navbar } from "@/components/layout/navbar";
 import { Footer } from "@/components/layout/footer";
+import { FirebaseInit } from "@/components/shared/firebase-init";
 
 export const metadata: Metadata = {
   title: "LexiGuide — Understand the fine print | AI Legal Document Intelligence",
@@ -17,6 +18,7 @@ export default function RootLayout({
   return (
     <html lang="en" className="h-full">
       <body className="flex min-h-full flex-col bg-slate-50 text-slate-900 antialiased font-sans">
+        <FirebaseInit />
         {/* Accessibility Skip Link */}
         <a
           href="#main-content"

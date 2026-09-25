@@ -65,3 +65,30 @@ export function verifyDocumentOwnership(
 
   return false;
 }
+
+/**
+ * Validates the security entropy of the session secret for production environments.
+ */
+export function validateSessionSecretConfig(): { secure: boolean; warning?: string } {
+  const secret = process.env.SESSION_SECRET;
+  const isProd = process.env.NODE_ENV === "production";
+
+  if (!secret || secret.length < 32) {
+    const warning = "Security Notice: SESSION_SECRET is too short (< 32 chars). Set a high-entropy secret in production.";
+    if (isProd) {
+      console.warn(`[SECURITY CRITICAL] ${warning}`);
+    }
+    return { secure: false, warning };
+  }
+
+  if (secret.includes("change_in_production") || secret.includes("development")) {
+    const warning = "Security Notice: Default development SESSION_SECRET detected. Rotate in production.";
+    if (isProd) {
+      console.warn(`[SECURITY WARNING] ${warning}`);
+    }
+    return { secure: false, warning };
+  }
+
+  return { secure: true };
+}
+
