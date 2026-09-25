@@ -7,7 +7,7 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.7-blue.svg)](https://www.typescriptlang.org/)
 [![Database: Neon](https://img.shields.io/badge/Database-Neon%20Serverless%20Postgres-00E599.svg)](https://neon.tech/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind-3.4-38bdf8.svg)](https://tailwindcss.com/)
-[![Tests Passing](https://img.shields.io/badge/Tests-52%20Vitest%20Passed-emerald.svg)](tests/)
+[![Tests Passing](https://img.shields.io/badge/Tests-61%20Vitest%20Passed-emerald.svg)](tests/)
 [![Accessibility](https://img.shields.io/badge/WCAG-AAA%20Compliant-purple.svg)](app/globals.css)
 [![Live Demo](https://img.shields.io/badge/Live%20Demo-Vercel-black.svg)](https://lexi-guide-one.vercel.app/)
 
@@ -66,7 +66,19 @@ LexiGuide directly addresses all 7 challenge use cases:
 - Clicking **"View Source"** instantly smooth-scrolls to and highlights the target clause with a gold aura in the left pane.
 - Summarizes document type, parties, effective dates, durations, and major obligations.
 
-### 📊 2. Contract Symmetry & Power Balance Radar (Unique AI Feature)
+### 📐 2. Contract Readability & Complexity Meter
+- Automatically analyzes Flesch-Kincaid Grade Level, average words per sentence, estimated reading duration, and legalese density percentage.
+- Clarifies whether an agreement requires specialized comprehension or can be navigated in plain English.
+
+### 📖 3. Interactive Legal Jargon Buster
+- Accessible modal defining archaic legal terms (*Indemnification*, *Force Majeure*, *Liquidated Damages*, *Severability*, *Cure Period*, *Perpetuity*).
+- Provides plain-English translations and practical "Why It Matters to You" risk breakdowns.
+
+### ⏱️ 4. Critical Deadlines & Milestone Timeline
+- Extracts chronological milestones: Day 0 execution, cure grace windows, renewal notice lead-times, and post-termination covenants.
+- Provides a 1-click **"Export to Calendar (.ics)"** to automatically sync all contract deadlines directly into Google Calendar, Outlook, or Apple Calendar.
+
+### 📊 5. Contract Symmetry & Power Balance Radar (Unique AI Feature)
 - Quantifies contractual power parity with an overall **0 to 100 Symmetry Score**.
 - Evaluates reciprocity across 4 critical commercial dimensions:
   - *Termination & Notice Parity* (detects absence of cure windows or unilateral termination).
@@ -74,21 +86,21 @@ LexiGuide directly addresses all 7 challenge use cases:
   - *Post-Termination Covenants* (evaluates restrictive non-compete durations and geographic overreach).
   - *Liability & Indemnification Mutuality* (checks monetary caps and defense reciprocity).
 
-### 🛡️ 3. Negative Space Scanner (What's Missing from the Draft)
+### 🛡️ 6. Negative Space Scanner (What's Missing from the Draft)
 - The highest risk in commercial agreements is often what was left out entirely.
 - Automatically identifies omitted industry-standard protections (missing cure periods, missing prior IP schedules, lack of aggregate liability ceilings).
 - Provides **1-click "Copy Protective Clause"** to immediately grab calibrated amendment language.
 
-### 🤝 4. Negotiation Counter-Proposal Engine
-- For clauses flagged with high attention levels, generates calibrated compromise proposals.
-- Equips the user with **tactical talking points** explaining why the proposed revision is industry-standard, facilitating respectful and productive negotiations.
+### ✉️ 7. AI Negotiation Counter-Proposal & Email Generator
+- For clauses flagged with high attention levels, generates calibrated compromise proposals and interactive redline diffs.
+- Includes a 1-click **"Draft Negotiation Email"** modal that generates polite, professionally diplomatic emails ready to send or copy.
 
-### ⚖️ 5. Compare (Contract Comparison Matrix)
+### ⚖️ 8. Compare (Contract Comparison Matrix)
 - Compares two document versions (e.g. Baseline vs Counter-Proposal).
 - Side-by-side comparative matrix across 10 critical legal categories: Parties, Payment, Duration, Termination, Renewal, Confidentiality, Intellectual Property, Liability, Dispute Resolution, Governing Law.
 - Plain-language explanation of substantive differences with citations to both Document A and Document B.
 
-### 💼 6. Prepare (Legal Consultation Brief)
+### 💼 9. Prepare (Legal Consultation Brief)
 - Prepares users for meetings with licensed attorneys.
 - Generates:
   - Neutral Situation Summary
@@ -98,7 +110,7 @@ LexiGuide directly addresses all 7 challenge use cases:
   - Interactive **Information to Prepare** checklist
   - One-click **Print to PDF** and **Export to Markdown (`.md`)**.
 
-### 💬 7. Document Q&A (Grounded RAG)
+### 💬 10. Document Q&A (Grounded RAG)
 - Inquires about termination rules, compensation schedules, IP assignments, and liabilities.
 - Returns plain-language response + exact verbatim evidence passage + source reference (`Document → Page → Section`).
 - Safe refusal mechanism: If a query cannot be answered from the document, states: *"I couldn't determine this from the provided document."*

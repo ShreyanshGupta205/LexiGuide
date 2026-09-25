@@ -28,6 +28,8 @@ import {
   Compass,
   ListChecks,
   ArrowRight,
+  Mail,
+  BookOpen,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -35,6 +37,10 @@ import { AttentionBadge } from "@/components/shared/attention-badge";
 import { DisclaimerBanner } from "@/components/shared/disclaimer-banner";
 import { KeyboardHelpDialog } from "@/components/document/keyboard-help-dialog";
 import { RedlineViewer } from "@/components/document/redline-viewer";
+import { ReadabilityMeter } from "@/components/document/readability-meter";
+import { JargonBusterModal } from "@/components/document/jargon-buster";
+import { DeadlinesTimeline } from "@/components/document/deadlines-timeline";
+import { NegotiationEmailModal } from "@/components/document/negotiation-email-modal";
 import { LegalDocument, ClauseAnalysis, KeyFinding, ClauseCategory, AdvancedIntelligenceReport } from "@/lib/types";
 
 export interface QAHistoryItem {
@@ -84,8 +90,10 @@ export default function DocumentAnalysisPage() {
   const [isLoadingReport, setIsLoadingReport] = React.useState(false);
   const [copiedSnippetId, setCopiedSnippetId] = React.useState<string | null>(null);
 
-  // Accessibility: Keyboard Shortcuts modal
+  // Accessibility & Additional Modals
   const [isHelpOpen, setIsHelpOpen] = React.useState(false);
+  const [isGlossaryOpen, setIsGlossaryOpen] = React.useState(false);
+  const [isEmailModalOpen, setIsEmailModalOpen] = React.useState(false);
 
   // Fetch document details and list of available documents
   React.useEffect(() => {
@@ -372,6 +380,17 @@ export default function DocumentAnalysisPage() {
             <Keyboard className="w-3.5 h-3.5 text-primary-700" />
             <span className="hidden sm:inline">Shortcuts</span>
             <kbd className="hidden sm:inline px-1 py-0.5 rounded bg-slate-100 text-[10px] font-mono border">?</kbd>
+          </Button>
+
+          <Button
+            size="sm"
+            variant="ghost"
+            onClick={() => setIsGlossaryOpen(true)}
+            className="h-8 px-2 text-xs text-slate-600 hover:text-slate-900 gap-1.5 border border-slate-200"
+            aria-label="Legal Jargon Buster"
+          >
+            <BookOpen className="w-3.5 h-3.5 text-primary-700" />
+            <span className="hidden sm:inline">Jargon Buster</span>
           </Button>
 
           <Link href={`/documents/${currentDoc.id}/consultation`}>
@@ -885,6 +904,16 @@ export default function DocumentAnalysisPage() {
                   </CardContent>
                 </Card>
 
+                {/* Legalese Density & Readability Intelligence */}
+                <ReadabilityMeter rawText={currentDoc.rawText} />
+
+                {/* Critical Deadlines & Milestone Timeline with Calendar Export */}
+                <DeadlinesTimeline
+                  documentName={currentDoc.fileName}
+                  effectiveDate={currentDoc.summary?.effectiveDate}
+                  duration={currentDoc.summary?.duration}
+                />
+
                 <DisclaimerBanner compact />
               </div>
             )}
@@ -1270,16 +1299,26 @@ export default function DocumentAnalysisPage() {
                     {/* SECTION 3: STRATEGIC COUNTER-PROPOSAL ENGINE */}
                     {intelligenceReport.counterProposals.length > 0 && (
                       <div className="space-y-3 pt-2">
-                        <div>
-                          <div className="flex items-center gap-2">
-                            <Sparkles className="w-4 h-4 text-amber-600" />
-                            <h4 className="text-sm font-bold text-slate-900">
-                              Negotiation Counter-Proposals & Talking Points
-                            </h4>
+                        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
+                          <div>
+                            <div className="flex items-center gap-2">
+                              <Sparkles className="w-4 h-4 text-amber-600" />
+                              <h4 className="text-sm font-bold text-slate-900">
+                                Negotiation Counter-Proposals & Talking Points
+                              </h4>
+                            </div>
+                            <p className="text-xs text-slate-600 mt-0.5">
+                              Calibrated counter-proposals to push back against one-sided terms without alienating the other party.
+                            </p>
                           </div>
-                          <p className="text-xs text-slate-600 mt-0.5">
-                            Calibrated counter-proposals to push back against one-sided terms without alienating the other party.
-                          </p>
+                          <Button
+                            size="sm"
+                            onClick={() => setIsEmailModalOpen(true)}
+                            className="bg-primary-900 hover:bg-primary-800 text-white text-xs gap-1.5 shrink-0 shadow-xs"
+                          >
+                            <Mail className="w-3.5 h-3.5" />
+                            Draft Negotiation Email
+                          </Button>
                         </div>
 
                         <div className="space-y-4">
@@ -1540,6 +1579,20 @@ export default function DocumentAnalysisPage() {
       <KeyboardHelpDialog
         isOpen={isHelpOpen}
         onClose={() => setIsHelpOpen(false)}
+      />
+
+      {/* Interactive Legal Jargon Buster */}
+      <JargonBusterModal
+        isOpen={isGlossaryOpen}
+        onClose={() => setIsGlossaryOpen(false)}
+      />
+
+      {/* Negotiation Counter-Proposal Email Generator */}
+      <NegotiationEmailModal
+        isOpen={isEmailModalOpen}
+        onClose={() => setIsEmailModalOpen(false)}
+        documentName={currentDoc.fileName}
+        counterProposals={intelligenceReport?.counterProposals || []}
       />
     </div>
   );
