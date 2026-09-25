@@ -7,8 +7,9 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.7-blue.svg)](https://www.typescriptlang.org/)
 [![Database: Neon](https://img.shields.io/badge/Database-Neon%20Serverless%20Postgres-00E599.svg)](https://neon.tech/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind-3.4-38bdf8.svg)](https://tailwindcss.com/)
-[![Tests Passing](https://img.shields.io/badge/Tests-33%20Vitest%20Passed-emerald.svg)](tests/)
+[![Tests Passing](https://img.shields.io/badge/Tests-52%20Vitest%20Passed-emerald.svg)](tests/)
 [![Accessibility](https://img.shields.io/badge/WCAG-AAA%20Compliant-purple.svg)](app/globals.css)
+[![Live Demo](https://img.shields.io/badge/Live%20Demo-Vercel-black.svg)](https://lexi-guide-one.vercel.app/)
 
 LexiGuide is an evidence-first, AI-powered legal document intelligence platform engineered to help individuals and professionals understand, compare, and navigate legal documents with clarity and speed.
 
@@ -36,32 +37,25 @@ LexiGuide does **NOT** present itself as a lawyer, guarantee legal outcomes, or 
 
 ---
 
-## 1. Problem Statement & Vision
+## 1. Challenge Track: AI for Legal Assistance & Access
 
-Legal agreements govern employment, intellectual property, leasing, commerce, and partnerships. Yet ordinary individuals and business managers face three chronic obstacles:
-- **Dense Legalese & Asymmetric Information:** Lengthy cross-references, archaic legal phrasing, and hidden clauses buried on page 14.
-- **Unprepared Legal Consultations:** Clients routinely arrive at expensive attorney consultations without organized document timelines or high-leverage questions.
-- **AI Hallucination & Black-Box Generic Chatbots:** Generic chatbots often fabricate clauses, misquote page numbers, or give dangerous, unqualified legal declarations (such as declaring a contract "illegal").
+> **Official Challenge Problem Statement:**  
+> *"Legal information can often be complex, difficult to understand, and challenging to navigate without professional assistance. Build a GenAI-powered solution that makes legal information and basic legal assistance more accessible by helping users understand, compare, and navigate legal documents and information."*
 
-### The LexiGuide Solution
-LexiGuide introduces a structured, evidence-grounded paradigm:
-```text
-Document
-    ↓
-Document Understanding
-    ↓
-Structured Clauses
-    ↓
-AI Analysis
-    ↓
-Important Findings
-    ↓
-Source Evidence
-    ↓
-User Questions / Comparison / Consultation Preparation
-```
+### 100% Problem Statement Alignment Matrix
 
-Every insight links directly to the specific page and section of the uploaded document, and ungrounded questions are met with honest safe refusals rather than hallucinated answers.
+LexiGuide directly addresses all 7 challenge use cases:
+
+| Challenge Use Case | How LexiGuide Solves It | Implementation & Links |
+| :--- | :--- | :--- |
+| **1. Simplifying complex legal documents** | Dual-pane split-screen viewer translating dense legalese into plain-language clause explanations while anchoring exact page/section references. | [`/documents/[id]`](https://lexi-guide-one.vercel.app/documents/demo-doc-1) |
+| **2. Comparing contracts, agreements, or policies** | Multi-contract comparison engine generating a 10-dimension substantive variance matrix with clause-by-clause citations. | [`/compare`](https://lexi-guide-one.vercel.app/compare) |
+| **3. Highlighting important clauses, obligations, risks, or inconsistencies** | Automated 3-tier risk triage badges (`NEEDS_ATTENTION`, `IMPORTANT`, `INFORMATION`), major obligations extractor, and Contract Symmetry Radar. | [`/documents/[id]`](https://lexi-guide-one.vercel.app/documents/demo-doc-1) |
+| **4. Answering questions based on provided legal documents** | Grounded Document Q&A using hybrid BM25 retrieval with Gemini LLM, returning verbatim evidence quotes with exact section citations and safe refusals. | [`/questions`](https://lexi-guide-one.vercel.app/questions) |
+| **5. Helping users understand their options and potential next steps** | **Options & Potential Next Steps Advisor**: Generates 3 strategic pathways (Accept As-Is, Propose Targeted Amendments, Escalate to Attorney) with interactive action checklists. | [`/documents/[id]`](https://lexi-guide-one.vercel.app/documents/demo-doc-1) |
+| **6. Generating summaries, checklists, or other actionable outputs** | Executive summaries, interactive "Documents to Bring" and "Information to Prepare" checklists, and visual Redline Diff counter-proposals with 1-click copying. | [`/documents/[id]/consultation`](https://lexi-guide-one.vercel.app/documents/demo-doc-1/consultation) |
+| **7. Helping users prepare information or questions for a legal professional** | **Attorney Consultation Brief**: Synthesizes client situation, timeline, flagged risks, and high-leverage questions to ask counsel; exports to Markdown (.md) or PDF. | [`/consultation`](https://lexi-guide-one.vercel.app/consultation) |
+| **Legal Safety Notice** | Strictly follows the rule: *Provides information and assistance, rather than replacing professional legal advice*. | Persistent across all headers & disclaimers |
 
 ---
 

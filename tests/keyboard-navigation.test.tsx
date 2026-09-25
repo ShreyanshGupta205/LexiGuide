@@ -29,7 +29,7 @@ describe("Keyboard Navigation & Help Dialog Accessibility", () => {
     );
 
     expect(getByText("Focus in-document search box")).toBeDefined();
-    expect(getByText("Switch analysis tab (Clauses, Findings, Summary, Q&A, Fairness)")).toBeDefined();
+    expect(getByText("Switch analysis tab (Clauses, Findings, Summary, Q&A, Fairness, Options)")).toBeDefined();
     expect(getByText("Scroll down to next document section")).toBeDefined();
     expect(getByText("Scroll up to previous document section")).toBeDefined();
     expect(getByText("Toggle this keyboard shortcuts dialog")).toBeDefined();

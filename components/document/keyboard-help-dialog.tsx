@@ -14,7 +14,7 @@ export function KeyboardHelpDialog({ isOpen, onClose }: KeyboardHelpDialogProps)
 
   const shortcuts = [
     { key: "/", description: "Focus in-document search box" },
-    { key: "1 – 5", description: "Switch analysis tab (Clauses, Findings, Summary, Q&A, Fairness)" },
+    { key: "1 – 6", description: "Switch analysis tab (Clauses, Findings, Summary, Q&A, Fairness, Options)" },
     { key: "J", description: "Scroll down to next document section" },
     { key: "K", description: "Scroll up to previous document section" },
     { key: "Esc", description: "Close modal / clear search & highlighted clause" },

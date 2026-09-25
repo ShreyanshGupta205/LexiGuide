@@ -20,13 +20,16 @@ export async function GET(req: NextRequest) {
       summary: doc.summary,
     }));
 
-    return NextResponse.json({
-      documents: sanitized,
-      user: {
-        userId: session.userId,
-        isDemoUser: session.isDemoUser,
+    return NextResponse.json(
+      {
+        documents: sanitized,
+        user: {
+          userId: session.userId,
+          isDemoUser: session.isDemoUser,
+        },
       },
-    });
+      { headers: { "Cache-Control": "private, max-age=30, stale-while-revalidate=120" } }
+    );
   } catch {
     return NextResponse.json(
       { error: "Failed to retrieve documents." },

@@ -18,9 +18,7 @@ const globalForDocs = globalThis as unknown as {
 };
 
 export const documentStore = globalForDocs.lexiDocumentStore ?? new Map<string, LegalDocument>();
-if (process.env.NODE_ENV !== "production") {
-  globalForDocs.lexiDocumentStore = documentStore;
-}
+globalForDocs.lexiDocumentStore = documentStore;
 
 const localAI = new LocalAIProvider();
 
@@ -122,21 +120,26 @@ export async function listDocuments(userId: string): Promise<LegalDocument[]> {
  * Retrieves a document by ID with strict ownership validation
  */
 export async function getDocument(id: string, userId: string): Promise<LegalDocument | null> {
-  await seedDemoDocuments();
+  let doc = documentStore.get(id);
 
-  // If Neon is configured, retrieve from Postgres
-  if (isNeonConfigured()) {
+  if (!doc) {
+    await seedDemoDocuments();
+    doc = documentStore.get(id);
+  }
+
+  // If Neon is configured and doc is not yet in memory, retrieve from Postgres
+  if (!doc && isNeonConfigured()) {
     try {
       const dbDoc = await neonGetDocument(id, userId);
       if (dbDoc) {
-        return dbDoc;
+        documentStore.set(dbDoc.id, dbDoc);
+        doc = dbDoc;
       }
     } catch (e) {
       console.warn("Neon document fetch error, falling back to cache:", e);
     }
   }
 
-  const doc = documentStore.get(id);
   if (!doc) {
     return null;
   }

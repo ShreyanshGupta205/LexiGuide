@@ -15,6 +15,7 @@ import {
   CheckCircle2,
   ChevronRight,
   ExternalLink,
+  Scale,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AttentionBadge } from "@/components/shared/attention-badge";
@@ -56,9 +57,9 @@ export default function LandingPage() {
       {/* Hero Section */}
       <section className="relative overflow-hidden pt-16 pb-20 lg:pt-24 lg:pb-28 border-b border-slate-200 bg-white">
         <div className="mx-auto max-w-5xl px-4 sm:px-6 lg:px-8 text-center">
-          <div className="inline-flex items-center gap-2 rounded-full border border-slate-200 bg-slate-50 px-3 py-1 text-xs font-medium text-slate-700 mb-6 shadow-2xs">
-            <span className="flex h-2 w-2 rounded-full bg-emerald-500" aria-hidden="true" />
-            <span>Ready for PDF, DOCX, and TXT agreements</span>
+          <div className="inline-flex items-center gap-2 rounded-full border border-primary-200 bg-primary-50 px-3.5 py-1 text-xs font-semibold text-primary-900 mb-6 shadow-2xs">
+            <Scale className="w-3.5 h-3.5 text-primary-700" aria-hidden="true" />
+            <span>Track: AI for Legal Assistance & Access</span>
           </div>
 
           <h1 className="text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight text-slate-900 leading-[1.12]">
@@ -66,7 +67,7 @@ export default function LandingPage() {
           </h1>
 
           <p className="mt-6 text-lg sm:text-xl text-slate-600 max-w-2xl mx-auto leading-relaxed">
-            AI-powered document intelligence that helps you understand, compare, and navigate legal documents.
+            GenAI-powered document intelligence that makes legal assistance accessible by helping you understand, compare, and navigate agreements.
           </p>
 
           <div className="mt-8 flex flex-col sm:flex-row items-center justify-center gap-4">
