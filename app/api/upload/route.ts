@@ -76,8 +76,7 @@ export async function POST(req: NextRequest) {
       documentId: legalDoc.id,
       document: legalDoc,
     });
-  } catch (error) {
-    const message = error instanceof Error ? error.message : "Failed to process document";
+  } catch {
     return NextResponse.json(
       { error: "We couldn't analyze this document. Please check the file and try again." },
       { status: 500 }

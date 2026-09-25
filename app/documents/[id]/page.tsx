@@ -35,12 +35,30 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { AttentionBadge } from "@/components/shared/attention-badge";
 import { DisclaimerBanner } from "@/components/shared/disclaimer-banner";
+import dynamic from "next/dynamic";
+
+// Eagerly-needed core components
 import { KeyboardHelpDialog } from "@/components/document/keyboard-help-dialog";
 import { RedlineViewer } from "@/components/document/redline-viewer";
-import { ReadabilityMeter } from "@/components/document/readability-meter";
-import { JargonBusterModal } from "@/components/document/jargon-buster";
-import { DeadlinesTimeline } from "@/components/document/deadlines-timeline";
-import { NegotiationEmailModal } from "@/components/document/negotiation-email-modal";
+
+// Lazy-loaded: these modals are opened on-demand and should not block initial paint
+const ReadabilityMeter = dynamic(
+  () => import("@/components/document/readability-meter").then((m) => ({ default: m.ReadabilityMeter })),
+  { ssr: false }
+);
+const JargonBusterModal = dynamic(
+  () => import("@/components/document/jargon-buster").then((m) => ({ default: m.JargonBusterModal })),
+  { ssr: false }
+);
+const DeadlinesTimeline = dynamic(
+  () => import("@/components/document/deadlines-timeline").then((m) => ({ default: m.DeadlinesTimeline })),
+  { ssr: false }
+);
+const NegotiationEmailModal = dynamic(
+  () => import("@/components/document/negotiation-email-modal").then((m) => ({ default: m.NegotiationEmailModal })),
+  { ssr: false }
+);
+
 import { LegalDocument, ClauseAnalysis, KeyFinding, ClauseCategory, AdvancedIntelligenceReport } from "@/lib/types";
 
 export interface QAHistoryItem {

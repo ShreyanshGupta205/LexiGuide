@@ -7,7 +7,7 @@
 [![TypeScript](https://img.shields.io/badge/TypeScript-5.7-blue.svg)](https://www.typescriptlang.org/)
 [![Database: Neon](https://img.shields.io/badge/Database-Neon%20Serverless%20Postgres-00E599.svg)](https://neon.tech/)
 [![Tailwind CSS](https://img.shields.io/badge/Tailwind-3.4-38bdf8.svg)](https://tailwindcss.com/)
-[![Tests Passing](https://img.shields.io/badge/Tests-61%20Vitest%20Passed-emerald.svg)](tests/)
+[![Tests Passing](https://img.shields.io/badge/Tests-79%20Vitest%20Passed-emerald.svg)](tests/)
 [![Accessibility](https://img.shields.io/badge/WCAG-AAA%20Compliant-purple.svg)](app/globals.css)
 [![Live Demo](https://img.shields.io/badge/Live%20Demo-Vercel-black.svg)](https://lexi-guide-one.vercel.app/)
 

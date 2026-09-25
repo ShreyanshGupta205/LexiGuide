@@ -3,9 +3,26 @@ import { getCurrentSession } from "@/lib/security/auth";
 import { getDocument } from "@/lib/store/document-store";
 import { sanitizeUserInput } from "@/lib/security/sanitizer";
 import { getAIProvider } from "@/lib/ai/provider";
+import { checkRateLimit, getRateLimitKey } from "@/lib/security/rate-limiter";
 
 export async function POST(req: NextRequest) {
   try {
+    // Rate limit: max 20 AI Q&A requests per IP per minute
+    const rateLimitKey = getRateLimitKey(req);
+    const { allowed, remaining } = checkRateLimit(rateLimitKey, 20, 60_000);
+    if (!allowed) {
+      return NextResponse.json(
+        { error: "Too many requests. Please wait a moment before asking another question." },
+        {
+          status: 429,
+          headers: {
+            "Retry-After": "60",
+            "X-RateLimit-Remaining": "0",
+          },
+        }
+      );
+    }
+
     const session = getCurrentSession(req);
     const body = await req.json();
 
