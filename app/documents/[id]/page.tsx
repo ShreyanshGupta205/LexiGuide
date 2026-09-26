@@ -509,7 +509,7 @@ export default function DocumentAnalysisPage() {
             RIGHT PANE: AI ANALYSIS (SPLIT SCREEN RIGHT)
            ======================================================== */}
         <section
-          aria-label="AI Document Intelligence and Clause Breakdown"
+          aria-label="AI Document Intelligence — Simplified Clauses and Analysis"
           className={`flex-1 md:w-1/2 flex flex-col bg-slate-50/30 overflow-hidden ${
             mobileTab === "doc" ? "hidden md:flex" : "flex"
           }`}
@@ -529,7 +529,7 @@ export default function DocumentAnalysisPage() {
                     : "border-transparent text-slate-600 hover:text-slate-900"
                 }`}
               >
-                Clauses ({currentDoc.clauses?.length || 0})
+                Simplified Clauses ({currentDoc.clauses?.length || 0})
               </button>
               <button
                 id="tab-findings"
@@ -626,7 +626,7 @@ export default function DocumentAnalysisPage() {
           {/* Analysis Tab Content Container */}
           <div className="flex-1 overflow-y-auto p-4 sm:p-6 space-y-6">
             {/* ========================================================
-                TAB 1: STRUCTURED CLAUSES
+                TAB 1: SIMPLIFIED CLAUSES — Plain-Language Simplification of Legal Text
                ======================================================== */}
             {activeAnalysisTab === "clauses" && (
               <div
