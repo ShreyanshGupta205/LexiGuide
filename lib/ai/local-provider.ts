@@ -385,7 +385,9 @@ export class LocalAIProvider {
   }
 
   /**
-   * Grounded RAG Question Answering
+   * Grounded RAG Question Answering.
+   * Returns answers directly derived from retrieved document text.
+   * Confidence reflects whether the answer comes from exact evidence vs. inference.
    */
   async answerQuestion(
     question: string,
@@ -414,39 +416,57 @@ export class LocalAIProvider {
     }
 
     const best = scoredChunks[0].chunk;
-    const qLower = question.toLowerCase();
+    const evidenceText = best.text.length > 400 ? best.text.slice(0, 400) + "..." : best.text;
 
-    // Generate grounded plain-language answer based on retrieved chunk content
-    let plainAnswer = "";
-    if (qLower.includes("termination") || qLower.includes("terminate") || qLower.includes("notice")) {
-      plainAnswer = `Based on ${best.section}, either party may terminate the agreement according to the notice provisions specified. The document requires formal written notification prior to termination becoming effective.`;
-    } else if (qLower.includes("payment") || qLower.includes("compensation") || qLower.includes("salary") || qLower.includes("fee") || qLower.includes("money")) {
-      plainAnswer = `According to ${best.section}, payment terms and compensation are governed by the schedule in this section. Applicable fees or salary and reimbursement obligations must follow the documented procedure.`;
-    } else if (qLower.includes("intellectual property") || qLower.includes("ip") || qLower.includes("patent") || qLower.includes("invention")) {
-      plainAnswer = `Per ${best.section}, proprietary developments, inventions, and works created under this agreement are assigned to the designated party as stipulated in the proprietary rights clause.`;
-    } else if (qLower.includes("confidential") || qLower.includes("nda") || qLower.includes("secret")) {
-      plainAnswer = `Under ${best.section}, confidential information must be protected and kept non-disclosed during and following the term of the agreement.`;
-    } else if (qLower.includes("how long") || qLower.includes("duration") || qLower.includes("term")) {
-      plainAnswer = `The agreement's term and duration are defined in ${best.section}, remaining in effect until terminated in accordance with the contractual notice requirements.`;
+    // Build answer from actual retrieved text, not templates
+    // Find the most relevant sentence from the chunk that directly answers the question
+    const qTokens = question.toLowerCase().split(/\s+/).filter((w) => w.length > 3);
+    const sentences = best.text
+      .split(/[.!?]+/)
+      .map((s) => s.trim())
+      .filter((s) => s.length > 20);
+
+    // Score each sentence by how many question tokens it contains
+    const scoredSentences = sentences.map((s) => ({
+      text: s,
+      score: qTokens.filter((t) => s.toLowerCase().includes(t)).length,
+    }));
+    scoredSentences.sort((a, b) => b.score - a.score);
+
+    const bestSentence = scoredSentences[0]?.score > 0
+      ? scoredSentences[0].text
+      : sentences[0];
+
+    // Construct a factual answer grounded in the document text
+    let answer: string;
+    let confidence: "high" | "moderate" | "unsupported";
+
+    if (scoredSentences[0]?.score >= 2) {
+      // Direct evidence found — high confidence
+      answer = `Based on ${best.section} (Page ${best.page}): "${bestSentence}."`;
+      confidence = "high";
+    } else if (sentences.length > 0 && best.text.length > 50) {
+      // Related section found, extracting most relevant portion — moderate confidence
+      answer = `The ${best.section} section of "${documentName}" states: "${evidenceText.slice(0, 250)}..." — this is the most relevant provision found for your question.`;
+      confidence = "moderate";
     } else {
-      plainAnswer = `Based on the text in ${best.section} (Page ${best.page}), the document provides: "${best.text.slice(0, 160).trim()}..."`;
+      answer = "I couldn't determine this from the provided document. The text does not contain explicit provisions or terms addressing this question.";
+      confidence = "unsupported";
     }
 
-    // Extract relevant evidence snippet
-    const evidenceSnippet = best.text.length > 300 ? best.text.slice(0, 300) + "..." : best.text;
-
     return {
-      answer: plainAnswer,
-      evidence: evidenceSnippet,
+      answer,
+      evidence: evidenceText,
       source: {
         documentName,
         page: best.page,
         section: best.section,
         chunkId: best.id,
       },
-      confidence: "high",
+      confidence,
     };
   }
+
 
   /**
    * Contract Comparison

@@ -1,5 +1,11 @@
-import { describe, it, expect, beforeEach } from "vitest";
-import { checkRateLimit, getRateLimitKey } from "@/lib/security/rate-limiter";
+import { describe, it, expect } from "vitest";
+import {
+  checkRateLimit,
+  getRateLimitKey,
+  resetRateLimitStore,
+  startCleanup,
+  stopCleanup,
+} from "@/lib/security/rate-limiter";
 
 describe("Rate Limiter — Sliding Window Security", () => {
   it("allows requests within the rate limit window", () => {
@@ -51,4 +57,22 @@ describe("Rate Limiter — Sliding Window Security", () => {
     const mockRequest = new Request("https://lexiguide.app/api/qa");
     expect(getRateLimitKey(mockRequest)).toBe("unknown-ip");
   });
+
+  it("resetRateLimitStore clears all existing rate limit records", () => {
+    const key = `test-ip-reset-${Math.random()}`;
+    checkRateLimit(key, 1, 60_000);
+    expect(checkRateLimit(key, 1, 60_000).allowed).toBe(false);
+
+    resetRateLimitStore();
+
+    expect(checkRateLimit(key, 1, 60_000).allowed).toBe(true);
+  });
+
+  it("startCleanup and stopCleanup manage interval timer without leaks", () => {
+    const stop = startCleanup(10_000);
+    expect(typeof stop).toBe("function");
+    stop();
+    stopCleanup(); // Idempotent call
+  });
 });
+

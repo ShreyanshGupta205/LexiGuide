@@ -11,15 +11,48 @@ interface RateLimitEntry {
 
 const store = new Map<string, RateLimitEntry>();
 
-/** Periodically prune stale entries to prevent unbounded memory growth */
-setInterval(() => {
-  const now = Date.now();
-  store.forEach((entry, key) => {
-    if (now - entry.windowStart > 60_000) {
-      store.delete(key);
-    }
-  });
-}, 60_000);
+let cleanupInterval: ReturnType<typeof setInterval> | null = null;
+
+/**
+ * Starts the periodic cleanup timer to prune stale entries.
+ * Safe to call multiple times — only one timer runs at a time.
+ * Returns a stop function for cleanup in test environments.
+ */
+export function startCleanup(intervalMs = 60_000): () => void {
+  if (cleanupInterval !== null) return () => stopCleanup();
+
+  cleanupInterval = setInterval(() => {
+    const now = Date.now();
+    store.forEach((entry, key) => {
+      if (now - entry.windowStart > intervalMs) {
+        store.delete(key);
+      }
+    });
+  }, intervalMs);
+
+  // Allow the timer to be garbage-collected if the process is idle (Node.js only)
+  if (typeof cleanupInterval === "object" && cleanupInterval !== null && "unref" in cleanupInterval) {
+    (cleanupInterval as NodeJS.Timeout).unref();
+  }
+
+  return () => stopCleanup();
+}
+
+/**
+ * Stops and clears the cleanup interval.
+ * Useful in test teardown to prevent open handle warnings.
+ */
+export function stopCleanup(): void {
+  if (cleanupInterval !== null) {
+    clearInterval(cleanupInterval);
+    cleanupInterval = null;
+  }
+}
+
+// Auto-start in non-test environments
+if (process.env.NODE_ENV !== "test") {
+  startCleanup();
+}
 
 /**
  * Checks whether a given identifier (e.g. IP address) has exceeded the rate limit.
@@ -49,6 +82,13 @@ export function checkRateLimit(
 
   entry.count += 1;
   return { allowed: true, remaining: maxRequests - entry.count };
+}
+
+/**
+ * Resets the rate limit store — for use in tests only.
+ */
+export function resetRateLimitStore(): void {
+  store.clear();
 }
 
 /**

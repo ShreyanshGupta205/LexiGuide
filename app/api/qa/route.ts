@@ -73,7 +73,7 @@ export async function POST(req: NextRequest) {
         timestamp: new Date().toISOString(),
       },
     });
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { error: "An error occurred while answering your question. Please try again." },
       { status: 500 }

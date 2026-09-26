@@ -42,4 +42,25 @@ describe("Document Upload & Security Guard Tests", () => {
     expect(traversal.valid).toBe(false);
     expect(traversal.error).toContain("Invalid file name characters detected");
   });
+
+  it("detects and rejects spoofed PDF files with fake extensions but invalid magic bytes", () => {
+    const fakePdfBuffer = Buffer.from("NOT_A_REAL_PDF_HEADER_JUST_RANDOM_TEXT");
+    const result = validateUploadedFile("contract.pdf", fakePdfBuffer.length, "application/pdf", fakePdfBuffer);
+    expect(result.valid).toBe(false);
+    expect(result.error).toContain("Malformed PDF file: invalid header signatures");
+  });
+
+  it("detects and rejects spoofed DOCX files with invalid ZIP/OOXML magic bytes", () => {
+    const fakeDocxBuffer = Buffer.from("NOT_A_ZIP_ARCHIVE_DATA");
+    const result = validateUploadedFile("agreement.docx", fakeDocxBuffer.length, "application/vnd.openxmlformats-officedocument.wordprocessingml.document", fakeDocxBuffer);
+    expect(result.valid).toBe(false);
+    expect(result.error).toContain("Malformed DOCX file: invalid package structure");
+  });
+
+  it("accepts valid PDF files with proper %PDF magic header bytes", () => {
+    const validPdfBuffer = Buffer.from("%PDF-1.4 sample pdf content");
+    const result = validateUploadedFile("valid.pdf", validPdfBuffer.length, "application/pdf", validPdfBuffer);
+    expect(result.valid).toBe(true);
+    expect(result.normalizedExtension).toBe(".pdf");
+  });
 });

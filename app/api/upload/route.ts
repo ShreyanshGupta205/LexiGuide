@@ -1,15 +1,26 @@
 import { NextRequest, NextResponse } from "next/server";
 import { getCurrentSession } from "@/lib/security/auth";
-import { validateUploadedFile } from "@/lib/security/file-guard";
+import { validateUploadedFile, MAX_FILE_SIZE_BYTES } from "@/lib/security/file-guard";
 import { extractDocumentContent } from "@/lib/parsers";
 import { detectDocumentSections } from "@/lib/rag/section-detector";
 import { chunkDocumentSections } from "@/lib/rag/chunker";
 import { getAIProvider } from "@/lib/ai/provider";
 import { saveDocument } from "@/lib/store/document-store";
 import { LegalDocument } from "@/lib/types";
+import { checkRateLimit, getRateLimitKey } from "@/lib/security/rate-limiter";
 
 export async function POST(req: NextRequest) {
   try {
+    // Rate limit: max 5 document uploads per IP per minute (AI-heavy endpoint)
+    const rateLimitKey = getRateLimitKey(req);
+    const { allowed } = checkRateLimit(rateLimitKey, 5, 60_000);
+    if (!allowed) {
+      return NextResponse.json(
+        { error: "Too many upload requests. Please wait before uploading another document." },
+        { status: 429, headers: { "Retry-After": "60" } }
+      );
+    }
+
     const session = getCurrentSession(req);
     const formData = await req.formData();
     const file = formData.get("file") as File | null;
@@ -21,6 +32,13 @@ export async function POST(req: NextRequest) {
       );
     }
 
+    // Guard against DoS: check declared size BEFORE reading the full buffer
+    if (file.size > MAX_FILE_SIZE_BYTES) {
+      return NextResponse.json(
+        { error: `File exceeds the 10MB maximum allowed size (${(file.size / (1024 * 1024)).toFixed(1)}MB).` },
+        { status: 413 }
+      );
+    }
     const buffer = Buffer.from(await file.arrayBuffer());
     const validation = validateUploadedFile(file.name, file.size, file.type, buffer);
 

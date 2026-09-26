@@ -44,7 +44,7 @@ export async function POST(req: NextRequest) {
       success: true,
       report,
     });
-  } catch (error) {
+  } catch {
     return NextResponse.json(
       { error: "Failed to generate advanced intelligence report." },
       { status: 500 }

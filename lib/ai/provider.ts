@@ -221,15 +221,25 @@ Return strict JSON:
         const rawJson = data.candidates?.[0]?.content?.parts?.[0]?.text;
         if (rawJson) {
           const parsed = JSON.parse(rawJson);
-          if (parsed.answer) {
+          const validated = QAAnswerSchema.safeParse({
+            answer: parsed.answer,
+            evidence: parsed.evidence || (best.text.length > 250 ? best.text.slice(0, 250) + "..." : best.text),
+            source: {
+              page: best.page,
+              section: best.section,
+              chunkId: best.id,
+            },
+            isSupportedByDocument: parsed.isSupportedByDocument ?? true,
+          });
+          if (validated.success) {
             return {
-              answer: parsed.answer,
-              evidence: parsed.evidence || (best.text.length > 250 ? best.text.slice(0, 250) + "..." : best.text),
+              answer: validated.data.answer,
+              evidence: validated.data.evidence,
               source: {
                 documentName,
-                page: best.page,
-                section: best.section,
-                chunkId: best.id,
+                page: validated.data.source.page,
+                section: validated.data.source.section,
+                chunkId: validated.data.source.chunkId,
               },
               confidence: "high",
             };

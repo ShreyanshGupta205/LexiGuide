@@ -60,4 +60,37 @@ describe("RAG Retrieval & Citation Grounding Engine", () => {
     const grounded = isRetrievalGrounded(results);
     expect(grounded).toBe(false);
   });
+
+  it("LocalAIProvider.answerQuestion grounds answers in actual document text", async () => {
+    const { LocalAIProvider } = await import("@/lib/ai/local-provider");
+    const ai = new LocalAIProvider();
+    const response = await ai.answerQuestion(
+      "What is the compensation and monthly consulting retainer amount?",
+      sampleChunks,
+      "Consulting Agreement.pdf"
+    );
+
+    expect(response.confidence).toBe("high");
+    expect(response.answer).toContain("SECTION 4. COMPENSATION");
+    expect(response.answer).toContain("$10,000");
+    expect(response.source.documentName).toBe("Consulting Agreement.pdf");
+    expect(response.source.page).toBe(2);
+    expect(response.source.section).toContain("COMPENSATION");
+    expect(response.evidence).toContain("$10,000");
+  });
+
+  it("LocalAIProvider.answerQuestion returns unsupported when question cannot be answered", async () => {
+    const { LocalAIProvider } = await import("@/lib/ai/local-provider");
+    const ai = new LocalAIProvider();
+    const response = await ai.answerQuestion(
+      "What is the policy on interstellar teleportation devices?",
+      sampleChunks,
+      "Consulting Agreement.pdf"
+    );
+
+    expect(response.confidence).toBe("unsupported");
+    expect(response.answer).toContain("I couldn't determine this from the provided document");
+    expect(response.source.documentName).toBe("Consulting Agreement.pdf");
+  });
 });
+
